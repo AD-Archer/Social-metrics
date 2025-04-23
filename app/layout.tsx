@@ -9,7 +9,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "SocialMetrics - Social Media Analytics Dashboard",
   description: "Track and analyze your social media performance across multiple platforms.",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
