@@ -1,6 +1,11 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chart } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useAccounts } from "@/context/account-context"
 import {
   Area,
   AreaChart,
@@ -46,6 +51,56 @@ const tweetPerformanceData = [
 ]
 
 export default function TwitterPage() {
+  const { accounts, isConnected } = useAccounts()
+  const isTwitterConnected = isConnected("twitter")
+
+  // Not connected state
+  if (!isTwitterConnected) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Twitter Analytics</h1>
+          <p className="text-muted-foreground">Connect your Twitter account to view analytics.</p>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Not Connected</CardTitle>
+            <CardDescription>
+              You need to connect your Twitter account to view analytics and insights.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center text-center p-6">
+            <div className="rounded-full bg-muted p-6 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-8 w-8 text-muted-foreground"
+              >
+                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Connect Twitter</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Connect your Twitter account to access analytics, track growth, and measure engagement.
+            </p>
+            <Link href="/dashboard/settings?tab=connections">
+              <Button className="w-full">Go to Settings</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Connected state - show analytics
   return (
     <div className="space-y-6">
       <div>

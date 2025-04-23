@@ -1,6 +1,11 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chart } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useAccounts } from "@/context/account-context"
 import {
   Area,
   AreaChart,
@@ -46,6 +51,56 @@ const streamData = [
 ]
 
 export default function TwitchPage() {
+  const { accounts, isConnected } = useAccounts()
+  const isTwitchConnected = isConnected("twitch")
+  
+  // Not connected state
+  if (!isTwitchConnected) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Twitch Analytics</h1>
+          <p className="text-muted-foreground">Connect your Twitch account to view analytics.</p>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Not Connected</CardTitle>
+            <CardDescription>
+              You need to connect your Twitch account to view analytics and insights.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center text-center p-6">
+            <div className="rounded-full bg-muted p-6 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-8 w-8 text-muted-foreground"
+              >
+                <path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Connect Twitch</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Connect your Twitch account to access analytics, track growth, and measure engagement.
+            </p>
+            <Link href="/dashboard/settings?tab=connections">
+              <Button className="w-full">Go to Settings</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+  
+  // Connected state - show analytics
   return (
     <div className="space-y-6">
       <div>

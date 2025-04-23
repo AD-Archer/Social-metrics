@@ -1,6 +1,11 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chart } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useAccounts } from "@/context/account-context"
 import {
   Area,
   AreaChart,
@@ -45,6 +50,57 @@ const contentTypeData = [
 ]
 
 export default function YoutubePage() {
+  const { accounts, isConnected } = useAccounts()
+  const isYoutubeConnected = isConnected("youtube")
+
+  // Not connected state
+  if (!isYoutubeConnected) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">YouTube Analytics</h1>
+          <p className="text-muted-foreground">Connect your YouTube account to view analytics.</p>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Not Connected</CardTitle>
+            <CardDescription>
+              You need to connect your YouTube account to view analytics and insights.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center text-center p-6">
+            <div className="rounded-full bg-muted p-6 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-8 w-8 text-muted-foreground"
+              >
+                <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+                <path d="m10 15 5-3-5-3z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Connect YouTube</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Connect your YouTube account to access analytics, track growth, and measure engagement.
+            </p>
+            <Link href="/dashboard/settings?tab=connections">
+              <Button className="w-full">Go to Settings</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Connected state - show analytics
   return (
     <div className="space-y-6">
       <div>
