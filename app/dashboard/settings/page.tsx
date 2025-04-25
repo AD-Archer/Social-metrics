@@ -2,76 +2,298 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Bell, Check, Key, Lock, User } from "lucide-react"
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
+// Add EmailAuthProvider for checking password provider
+import { useAuthState } from "react-firebase-hooks/auth"
+import { EmailAuthProvider } from "firebase/auth";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAccounts } from "@/context/account-context"
-import { useToast } from "@/hooks/use-toast"
+// Import Firebase instances
+import { auth, db } from "@/lib/firebase";
+// Import UI components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+// Import custom hooks
+import { useAccounts } from "@/context/account-context";
 
 // Define platform type to avoid using 'any'
 type SocialPlatform = 'instagram' | 'youtube' | 'tiktok' | 'twitch' | 'twitter';
 
+// Define user settings interface
+interface UserSettings {
+  profile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    username: string;
+    bio: string;
+    avatarUrl: string;
+  };
+  notifications: {
+    performanceAlerts: boolean;
+    engagementReports: boolean;
+    followerMilestones: boolean;
+    contentSuggestions: boolean;
+    trendsAlerts: boolean;
+    productUpdates: boolean;
+  };
+}
+
+// Default settings
+const defaultSettings: UserSettings = {
+  profile: {
+    firstName: "",
+    lastName: "",
+    email: "",
+    username: "",
+    bio: "",
+    avatarUrl: "/placeholder.svg?height=96&width=96",
+  },
+  notifications: {
+    performanceAlerts: true,
+    engagementReports: true,
+    followerMilestones: false,
+    contentSuggestions: true,
+    trendsAlerts: false,
+    productUpdates: false,
+  },
+};
+
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [user, loadingAuth] = useAuthState(auth); // Get loading state from useAuthState
+  // Fetch sign-in methods to check for password provider - Replaced useSignInMethods
+  // const [signInMethods, loadingSignInMethods] = useSignInMethods(auth);
+  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
   const { accounts, connectAccount, disconnectAccount } = useAccounts()
   const { toast } = useToast()
 
-  const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+  // Determine if the user has a password account by checking providerData
+  const hasPasswordProvider = user?.providerData.some(
+    (provider) => provider.providerId === EmailAuthProvider.PROVIDER_ID
+  );
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+  // Fetch user settings on component mount
+  useEffect(() => {
+    const fetchUserSettings = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          // Get existing settings or set defaults for missing fields
+          const userData = userDoc.data();
+          setSettings({
+            profile: {
+              firstName: userData.firstName || "",
+              lastName: userData.lastName || "",
+              email: userData.email || user.email || "",
+              username: userData.username || "",
+              bio: userData.bio || "",
+              avatarUrl: userData.avatarUrl || "/placeholder.svg?height=96&width=96",
+            },
+            notifications: {
+              performanceAlerts: userData.notifications?.performanceAlerts ?? true,
+              engagementReports: userData.notifications?.engagementReports ?? true,
+              followerMilestones: userData.notifications?.followerMilestones ?? false,
+              contentSuggestions: userData.notifications?.contentSuggestions ?? true,
+              trendsAlerts: userData.notifications?.trendsAlerts ?? false,
+              productUpdates: userData.notifications?.productUpdates ?? false,
+            },
+          });
+        } else {
+          // Create default settings document for new users
+          await setDoc(userDocRef, {
+            firstName: "",
+            lastName: "",
+            email: user.email || "",
+            username: "",
+            bio: "",
+            avatarUrl: "/placeholder.svg?height=96&width=96",
+            notifications: defaultSettings.notifications,
+            createdAt: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load settings. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserSettings();
+  }, [user, toast]); // Keep dependencies as they are, toast is stable
+
+  const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+    
+    setIsLoading(true);
+    
+    const formData = new FormData(e.currentTarget);
+    const profileData = {
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      username: formData.get("username") as string,
+      bio: formData.get("bio") as string,
+    };
+    
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, profileData);
+      
+      // Update local state
+      setSettings(prev => ({
+        ...prev,
+        profile: {
+          ...prev.profile,
+          ...profileData,
+        }
+      }));
+      
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully.",
-      })
-    }, 1500)
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleSavePassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    // Password changes would typically use Firebase Auth methods
+    // This would be implemented separately as it requires current password verification
+    setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: "Password updated",
-        description: "Your password has been updated successfully.",
-      })
-    }, 1500)
+    toast({
+      title: "Feature not implemented",
+      description: "Password changes through Firebase Auth will be implemented in a future update.",
+    });
+    
+    setIsLoading(false);
   }
 
-  const handleToggleConnection = (platform: string, isConnected: boolean) => {
-    setIsLoading(true)
+  const handleToggleNotification = async (settingName: keyof UserSettings['notifications']) => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Update local state immediately for UI responsiveness
+      setSettings(prev => ({
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          [settingName]: !prev.notifications[settingName],
+        }
+      }));
+      
+      // Update in Firebase
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, {
+        [`notifications.${settingName}`]: !settings.notifications[settingName],
+      });
+      
+    } catch (error) {
+      console.error("Error updating notification settings:", error);
+      
+      // Revert local state if Firebase update fails
+      setSettings(prev => ({
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          [settingName]: settings.notifications[settingName],
+        }
+      }));
+      
+      toast({
+        title: "Error",
+        description: "Failed to update notification settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    // Simulate API call
+  const handleSaveNotifications = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, {
+        notifications: settings.notifications,
+      });
+      
+      toast({
+        title: "Preferences saved",
+        description: "Your notification preferences have been updated.",
+      });
+    } catch (error) {
+      console.error("Error saving notifications:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save notification preferences. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggleConnection = (platform: string, isConnected: boolean) => {
+    setIsLoading(true);
+
+    // In a real implementation, you would store connected platforms in Firebase
     setTimeout(() => {
       if (isConnected) {
-        disconnectAccount(platform as SocialPlatform)
+        disconnectAccount(platform as SocialPlatform);
         toast({
           title: "Account disconnected",
           description: `Your ${platform} account has been disconnected.`,
-        })
+        });
       } else {
-        connectAccount(platform as SocialPlatform)
+        connectAccount(platform as SocialPlatform);
         toast({
           title: "Account connected",
           description: `Your ${platform} account has been connected successfully.`,
-        })
+        });
       }
       setIsLoading(false)
-    }, 1000)
+    }, 1000);
+  }
+
+  // Show loading state if user auth or settings are still initializing
+  // Use loadingAuth from useAuthState
+  if (isLoading || loadingAuth || !user) { // Removed loadingSignInMethods
+    return <div className="flex items-center justify-center min-h-screen">Loading settings...</div>;
   }
 
   return (
@@ -99,7 +321,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col md:flex-row gap-4 md:items-center">
                   <div className="relative w-24 h-24">
                     <Image
-                      src="/placeholder.svg?height=96&width=96"
+                      src={settings.profile.avatarUrl || "/placeholder.svg?height=96&width=96"}
                       alt="Avatar"
                       className="rounded-full border"
                       width={96}
@@ -121,23 +343,44 @@ export default function SettingsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First name</Label>
-                    <Input id="firstName" defaultValue="John" />
+                    <Input 
+                      id="firstName" 
+                      name="firstName" 
+                      defaultValue={settings.profile.firstName} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last name</Label>
-                    <Input id="lastName" defaultValue="Doe" />
+                    <Input 
+                      id="lastName" 
+                      name="lastName" 
+                      defaultValue={settings.profile.lastName} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="john@example.com" />
+                    <Input 
+                      id="email" 
+                      name="email" 
+                      type="email" 
+                      defaultValue={settings.profile.email} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
-                    <Input id="username" defaultValue="johndoe" />
+                    <Input 
+                      id="username" 
+                      name="username" 
+                      defaultValue={settings.profile.username} 
+                    />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="bio">Bio</Label>
-                    <Input id="bio" defaultValue="Social media enthusiast and content creator." />
+                    <Input 
+                      id="bio" 
+                      name="bio" 
+                      defaultValue={settings.profile.bio} 
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -150,42 +393,46 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
         <TabsContent value="account" className="space-y-4">
-          <Card>
-            <form onSubmit={handleSavePassword}>
-              <CardHeader>
-                <CardTitle>Password</CardTitle>
-                <CardDescription>Change your password here.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="currentPassword" type="password" className="pl-9" />
+          {/* Conditionally render password card */}
+          {hasPasswordProvider && (
+            <Card>
+              <form onSubmit={handleSavePassword}>
+                <CardHeader>
+                  <CardTitle>Password</CardTitle>
+                  <CardDescription>Change your password here.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="currentPassword" name="currentPassword" type="password" className="pl-9" />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New password</Label>
-                  <div className="relative">
-                    <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="newPassword" type="password" className="pl-9" />
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New password</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="newPassword" name="newPassword" type="password" className="pl-9" />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm password</Label>
-                  <div className="relative">
-                    <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="confirmPassword" type="password" className="pl-9" />
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm password</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="confirmPassword" name="confirmPassword" type="password" className="pl-9" />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Updating..." : "Update password"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Updating..." : "Update password"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+          )}
+          {/* Keep Delete Account card */}
           <Card>
             <CardHeader>
               <CardTitle>Delete Account</CardTitle>
@@ -212,43 +459,87 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Bell className="h-4 w-4" />
-                    <Label htmlFor="emailNotifications" className="font-normal">
-                      Email Notifications
+                    <Label htmlFor="performanceAlerts" className="font-normal">
+                      Performance Alerts
                     </Label>
                   </div>
-                  <Switch id="emailNotifications" defaultChecked />
+                  <Switch 
+                    id="performanceAlerts" 
+                    checked={settings.notifications.performanceAlerts}
+                    onCheckedChange={() => handleToggleNotification('performanceAlerts')}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Bell className="h-4 w-4" />
-                    <Label htmlFor="pushNotifications" className="font-normal">
-                      Push Notifications
+                    <Label htmlFor="engagementReports" className="font-normal">
+                      Weekly Engagement Reports
                     </Label>
                   </div>
-                  <Switch id="pushNotifications" defaultChecked />
+                  <Switch 
+                    id="engagementReports" 
+                    checked={settings.notifications.engagementReports}
+                    onCheckedChange={() => handleToggleNotification('engagementReports')}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Bell className="h-4 w-4" />
-                    <Label htmlFor="weeklyDigest" className="font-normal">
-                      Weekly Digest
+                    <Label htmlFor="followerMilestones" className="font-normal">
+                      Follower Milestone Alerts
                     </Label>
                   </div>
-                  <Switch id="weeklyDigest" />
+                  <Switch 
+                    id="followerMilestones" 
+                    checked={settings.notifications.followerMilestones}
+                    onCheckedChange={() => handleToggleNotification('followerMilestones')}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Bell className="h-4 w-4" />
-                    <Label htmlFor="marketingEmails" className="font-normal">
-                      Marketing Emails
+                    <Label htmlFor="contentSuggestions" className="font-normal">
+                      Content Strategy Suggestions
                     </Label>
                   </div>
-                  <Switch id="marketingEmails" />
+                  <Switch 
+                    id="contentSuggestions" 
+                    checked={settings.notifications.contentSuggestions}
+                    onCheckedChange={() => handleToggleNotification('contentSuggestions')}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Bell className="h-4 w-4" />
+                    <Label htmlFor="trendsAlerts" className="font-normal">
+                      Industry Trends Alerts
+                    </Label>
+                  </div>
+                  <Switch 
+                    id="trendsAlerts" 
+                    checked={settings.notifications.trendsAlerts}
+                    onCheckedChange={() => handleToggleNotification('trendsAlerts')}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Bell className="h-4 w-4" />
+                    <Label htmlFor="productUpdates" className="font-normal">
+                      Product Updates & Features
+                    </Label>
+                  </div>
+                  <Switch 
+                    id="productUpdates" 
+                    checked={settings.notifications.productUpdates}
+                    onCheckedChange={() => handleToggleNotification('productUpdates')}
+                  />
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-end">
-              <Button>Save preferences</Button>
+              <Button onClick={handleSaveNotifications} disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save preferences"}
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -260,7 +551,8 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
-                {accounts.filter(account => account.platform === 'youtube').map((account) => {
+                {/* Add type for 'account' parameter */}
+                {accounts.filter(account => account.platform === 'youtube').map((account: { platform: string; connected: boolean }) => {
                   // Only include YouTube in platform colors and icons
                   const platformColors: Record<string, string> = {
                     youtube: "#FF0000",
