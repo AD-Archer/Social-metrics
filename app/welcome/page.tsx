@@ -1,6 +1,4 @@
-import Image from "next/image"
-import { ArrowRight, Instagram, Youtube, TwitterIcon as TikTok, Twitch, Twitter } from "lucide-react"
-
+import { ArrowRight, Youtube } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
@@ -20,37 +18,22 @@ export default function WelcomePage() {
             Welcome to SocialMetrics!
           </h1>
           <p className="text-lg text-gray-600 text-center max-w-xl mb-2">
-            Your all-in-one dashboard for social media analytics. Connect your accounts and unlock powerful insights.
+            Your all-in-one dashboard for Social Media analytics. Connect your account and unlock powerful insights.
           </p>
         </div>
 
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-2xl">
           <div className="mb-8 flex flex-col items-center">
             <div className="flex items-center gap-2 text-base text-indigo-600 font-medium bg-indigo-50 rounded-full px-4 py-1 mb-2">
               <span>Step 1</span>
               <span className="w-1 h-1 bg-indigo-400 rounded-full" />
-              <span>Connect your social accounts</span>
+              <span>Connect your YouTube account</span>
             </div>
             <span className="text-sm text-gray-400">You can add more accounts later from settings.</span>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Instagram */}
-            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Instagram className="mr-2 text-pink-500" /> Instagram
-                </CardTitle>
-                <CardDescription>Track followers, engagement, and more.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/dashboard/settings">
-                  <Button className="w-full" variant="outline">Connect Instagram</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* YouTube */}
+          <div className="grid gap-6 md:grid-cols-1">
+            {/* YouTube Only */}
             <Card className="transition-transform hover:scale-105 hover:shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -61,51 +44,6 @@ export default function WelcomePage() {
               <CardContent>
                 <Link href="/dashboard/settings">
                   <Button className="w-full" variant="outline">Connect YouTube</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* TikTok */}
-            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TikTok className="mr-2 text-black" /> TikTok
-                </CardTitle>
-                <CardDescription>Track followers, likes, and video performance.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/dashboard/settings">
-                  <Button className="w-full" variant="outline">Connect TikTok</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Twitch */}
-            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Twitch className="mr-2 text-purple-500" /> Twitch
-                </CardTitle>
-                <CardDescription>Monitor followers, subscribers, and stream stats.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/dashboard/settings">
-                  <Button className="w-full" variant="outline">Connect Twitch</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Twitter */}
-            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Twitter className="mr-2 text-sky-500" /> Twitter
-                </CardTitle>
-                <CardDescription>Track followers, engagement, and tweet performance.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/dashboard/settings">
-                  <Button className="w-full" variant="outline">Connect Twitter</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -120,7 +58,7 @@ export default function WelcomePage() {
               </Button>
             </Link>
             <p className="text-sm text-gray-400">
-              You can connect your accounts later from the dashboard settings.
+              You can connect your account later from the dashboard settings.
             </p>
           </div>
         </div>

@@ -50,7 +50,7 @@ const contentTypeData = [
 ]
 
 export default function YoutubePage() {
-  const { accounts, isConnected } = useAccounts()
+  const { isConnected } = useAccounts()
   const isYoutubeConnected = isConnected("youtube")
 
   // Not connected state

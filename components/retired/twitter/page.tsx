@@ -21,58 +21,57 @@ import {
   YAxis,
 } from "recharts"
 
-// Sample data for TikTok charts
+// Sample data for Twitter charts
 const followerData = [
-  { name: "Jan", followers: 35600 },
-  { name: "Feb", followers: 42300 },
-  { name: "Mar", followers: 51800 },
-  { name: "Apr", followers: 64200 },
-  { name: "May", followers: 78900 },
-  { name: "Jun", followers: 95400 },
-  { name: "Jul", followers: 112800 },
+  { name: "Jan", followers: 18400 },
+  { name: "Feb", followers: 19800 },
+  { name: "Mar", followers: 21500 },
+  { name: "Apr", followers: 23400 },
+  { name: "May", followers: 25600 },
+  { name: "Jun", followers: 28100 },
+  { name: "Jul", followers: 30800 },
 ]
 
 const engagementData = [
-  { name: "Jan", likes: 124000, comments: 8500, shares: 15600 },
-  { name: "Feb", likes: 158000, comments: 10200, shares: 19800 },
-  { name: "Mar", likes: 187000, comments: 12800, shares: 24300 },
-  { name: "Apr", likes: 215000, comments: 15400, shares: 29800 },
-  { name: "May", likes: 243000, comments: 18100, shares: 36200 },
-  { name: "Jun", likes: 278000, comments: 21300, shares: 43500 },
-  { name: "Jul", likes: 312000, comments: 24500, shares: 51200 },
+  { name: "Jan", likes: 4200, retweets: 820, replies: 340 },
+  { name: "Feb", likes: 3800, retweets: 750, replies: 290 },
+  { name: "Mar", likes: 5100, retweets: 940, replies: 410 },
+  { name: "Apr", likes: 5800, retweets: 1020, replies: 480 },
+  { name: "May", likes: 6300, retweets: 1150, replies: 520 },
+  { name: "Jun", likes: 7100, retweets: 1280, replies: 590 },
+  { name: "Jul", likes: 7800, retweets: 1420, replies: 650 },
 ]
 
-const videoPerformanceData = [
-  { name: "Video 1", views: 1250000 },
-  { name: "Video 2", views: 980000 },
-  { name: "Video 3", views: 1420000 },
-  { name: "Video 4", views: 860000 },
-  { name: "Video 5", views: 1680000 },
+const tweetPerformanceData = [
+  { name: "Tweet 1", impressions: 25000 },
+  { name: "Tweet 2", impressions: 18000 },
+  { name: "Tweet 3", impressions: 32000 },
+  { name: "Tweet 4", impressions: 16000 },
+  { name: "Tweet 5", impressions: 28000 },
 ]
 
-export default function TiktokPage() {
-  const { accounts, isConnected } = useAccounts()
-  const isTiktokConnected = isConnected("tiktok")
+export default function TwitterPage() {
+  const { isConnected } = useAccounts()
+  const isTwitterConnected = isConnected("twitter")
 
   // Not connected state
-  if (!isTiktokConnected) {
+  if (!isTwitterConnected) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">TikTok Analytics</h1>
-          <p className="text-muted-foreground">Connect your TikTok account to view analytics.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Twitter Analytics</h1>
+          <p className="text-muted-foreground">Connect your Twitter account to view analytics.</p>
         </div>
         
         <Card>
           <CardHeader>
             <CardTitle>Account Not Connected</CardTitle>
             <CardDescription>
-              You need to connect your TikTok account to view analytics and insights.
+              You need to connect your Twitter account to view analytics and insights.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center p-6">
             <div className="rounded-full bg-muted p-6 mb-4">
-              {/* TikTok Icon Placeholder - Replace with actual icon if available */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -85,12 +84,12 @@ export default function TiktokPage() {
                 strokeLinejoin="round"
                 className="h-8 w-8 text-muted-foreground"
               >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium mb-2">Connect TikTok</h3>
+            <h3 className="text-lg font-medium mb-2">Connect Twitter</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Connect your TikTok account to access analytics, track growth, and measure engagement.
+              Connect your Twitter account to access analytics, track growth, and measure engagement.
             </p>
             <Link href="/dashboard/settings?tab=connections">
               <Button className="w-full">Go to Settings</Button>
@@ -105,8 +104,8 @@ export default function TiktokPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">TikTok Analytics</h1>
-        <p className="text-muted-foreground">Detailed metrics and insights for your TikTok account.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Twitter Analytics</h1>
+        <p className="text-muted-foreground">Detailed metrics and insights for your Twitter account.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -132,36 +131,13 @@ export default function TiktokPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">112.8K</div>
-            <p className="text-xs text-muted-foreground">+18.2% from last month</p>
+            <div className="text-2xl font-bold">30.8K</div>
+            <p className="text-xs text-muted-foreground">+9.6% from last month</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Likes</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground h-4 w-4"
-            >
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1.8M</div>
-            <p className="text-xs text-muted-foreground">+12.2% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Video Views</CardTitle>
+            <CardTitle className="text-sm font-medium">Impressions</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -179,13 +155,36 @@ export default function TiktokPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">6.2M</div>
-            <p className="text-xs text-muted-foreground">+15.8% from last month</p>
+            <div className="text-2xl font-bold">245.3K</div>
+            <p className="text-xs text-muted-foreground">+12.2% from last month</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
+            <CardTitle className="text-sm font-medium">Engagement Rate</CardTitle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-muted-foreground h-4 w-4"
+            >
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">3.2%</div>
+            <p className="text-xs text-muted-foreground">+0.4% from last month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Profile Visits</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -204,8 +203,8 @@ export default function TiktokPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">245.3K</div>
-            <p className="text-xs text-muted-foreground">+9.4% from last month</p>
+            <div className="text-2xl font-bold">12.4K</div>
+            <p className="text-xs text-muted-foreground">+7.8% from last month</p>
           </CardContent>
         </Card>
       </div>
@@ -214,8 +213,8 @@ export default function TiktokPage() {
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="audience">Audience</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="live">LIVE</TabsTrigger>
+          <TabsTrigger value="tweets">Tweets</TabsTrigger>
+          <TabsTrigger value="mentions">Mentions</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -232,7 +231,7 @@ export default function TiktokPage() {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="followers" stroke="#000000" />
+                      <Line type="monotone" dataKey="followers" stroke="#1DA1F2" />
                     </LineChart>
                   </ResponsiveContainer>
                 </Chart>
@@ -240,18 +239,18 @@ export default function TiktokPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Top Videos</CardTitle>
-                <CardDescription>Best performing videos by views</CardDescription>
+                <CardTitle>Top Tweets</CardTitle>
+                <CardDescription>Best performing tweets by impressions</CardDescription>
               </CardHeader>
               <CardContent className="px-2">
                 <Chart>
                   <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={videoPerformanceData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <BarChart data={tweetPerformanceData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="views" fill="#000000" />
+                      <Bar dataKey="impressions" fill="#1DA1F2" />
                     </BarChart>
                   </ResponsiveContainer>
                 </Chart>
@@ -261,7 +260,7 @@ export default function TiktokPage() {
           <Card>
             <CardHeader>
               <CardTitle>Engagement Metrics</CardTitle>
-              <CardDescription>Likes, comments, and shares over time</CardDescription>
+              <CardDescription>Likes, retweets, and replies over time</CardDescription>
             </CardHeader>
             <CardContent className="px-2">
               <Chart>
@@ -276,24 +275,24 @@ export default function TiktokPage() {
                       type="monotone"
                       dataKey="likes"
                       stackId="1"
-                      stroke="#FE2C55"
-                      fill="#FE2C55"
+                      stroke="#1DA1F2"
+                      fill="#1DA1F2"
                       fillOpacity={0.6}
                     />
                     <Area
                       type="monotone"
-                      dataKey="comments"
+                      dataKey="retweets"
                       stackId="1"
-                      stroke="#25F4EE"
-                      fill="#25F4EE"
+                      stroke="#14171A"
+                      fill="#14171A"
                       fillOpacity={0.6}
                     />
                     <Area
                       type="monotone"
-                      dataKey="shares"
+                      dataKey="replies"
                       stackId="1"
-                      stroke="#000000"
-                      fill="#000000"
+                      stroke="#657786"
+                      fill="#657786"
                       fillOpacity={0.6}
                     />
                   </AreaChart>
@@ -315,28 +314,28 @@ export default function TiktokPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="content" className="space-y-4">
+        <TabsContent value="tweets" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Content Performance</CardTitle>
-              <CardDescription>Top performing videos and content analysis</CardDescription>
+              <CardTitle>Tweet Performance</CardTitle>
+              <CardDescription>Detailed metrics for your tweets</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Select the Content tab to view detailed content performance metrics.
+                Select the Tweets tab to view detailed tweet performance metrics.
               </p>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="live" className="space-y-4">
+        <TabsContent value="mentions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>LIVE Analytics</CardTitle>
-              <CardDescription>Performance metrics for TikTok LIVE streams</CardDescription>
+              <CardTitle>Mentions Analytics</CardTitle>
+              <CardDescription>Analysis of mentions and replies</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Select the LIVE tab to view detailed TikTok LIVE analytics.
+                Select the Mentions tab to view detailed mentions analytics.
               </p>
             </CardContent>
           </Card>

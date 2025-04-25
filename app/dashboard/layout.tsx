@@ -11,20 +11,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import {
-  BarChart3,
-  Bell,
-  ChevronDown,
-  Home,
-  Instagram,
-  LogOut,
-  Menu,
-  Settings,
-  Twitch,
-  Twitter,
-  User,
-  Youtube,
-} from "lucide-react"
+import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, Bell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -51,11 +38,7 @@ export default function DashboardLayout({
 
   const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
-    { name: "Instagram", href: "/dashboard/instagram", icon: Instagram },
     { name: "YouTube", href: "/dashboard/youtube", icon: Youtube },
-    { name: "TikTok", href: "/dashboard/tiktok", icon: BarChart3 },
-    { name: "Twitch", href: "/dashboard/twitch", icon: Twitch },
-    { name: "Twitter", href: "/dashboard/twitter", icon: Twitter },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ]
 

@@ -21,53 +21,51 @@ import {
   YAxis,
 } from "recharts"
 
-// Sample data for Twitter charts
+// Sample data for Instagram charts
 const followerData = [
-  { name: "Jan", followers: 18400 },
-  { name: "Feb", followers: 19800 },
-  { name: "Mar", followers: 21500 },
-  { name: "Apr", followers: 23400 },
-  { name: "May", followers: 25600 },
-  { name: "Jun", followers: 28100 },
-  { name: "Jul", followers: 30800 },
+  { name: "Jan", followers: 12400 },
+  { name: "Feb", followers: 13200 },
+  { name: "Mar", followers: 14800 },
+  { name: "Apr", followers: 16300 },
+  { name: "May", followers: 18100 },
+  { name: "Jun", followers: 19700 },
+  { name: "Jul", followers: 21500 },
 ]
 
 const engagementData = [
-  { name: "Jan", likes: 4200, retweets: 820, replies: 340 },
-  { name: "Feb", likes: 3800, retweets: 750, replies: 290 },
-  { name: "Mar", likes: 5100, retweets: 940, replies: 410 },
-  { name: "Apr", likes: 5800, retweets: 1020, replies: 480 },
-  { name: "May", likes: 6300, retweets: 1150, replies: 520 },
-  { name: "Jun", likes: 7100, retweets: 1280, replies: 590 },
-  { name: "Jul", likes: 7800, retweets: 1420, replies: 650 },
+  { name: "Jan", likes: 4200, comments: 820, shares: 340 },
+  { name: "Feb", likes: 3800, comments: 750, shares: 290 },
+  { name: "Mar", likes: 5100, comments: 940, shares: 410 },
+  { name: "Apr", likes: 5800, comments: 1020, shares: 480 },
+  { name: "May", likes: 6300, comments: 1150, shares: 520 },
+  { name: "Jun", likes: 7100, comments: 1280, shares: 590 },
+  { name: "Jul", likes: 7800, comments: 1420, shares: 650 },
 ]
 
-const tweetPerformanceData = [
-  { name: "Tweet 1", impressions: 25000 },
-  { name: "Tweet 2", impressions: 18000 },
-  { name: "Tweet 3", impressions: 32000 },
-  { name: "Tweet 4", impressions: 16000 },
-  { name: "Tweet 5", impressions: 28000 },
+const contentData = [
+  { name: "Photos", value: 65 },
+  { name: "Videos", value: 25 },
+  { name: "Reels", value: 10 },
 ]
 
-export default function TwitterPage() {
-  const { accounts, isConnected } = useAccounts()
-  const isTwitterConnected = isConnected("twitter")
+export default function InstagramPage() {
+  const { isConnected } = useAccounts()
+  const isInstagramConnected = isConnected("instagram")
 
   // Not connected state
-  if (!isTwitterConnected) {
+  if (!isInstagramConnected) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Twitter Analytics</h1>
-          <p className="text-muted-foreground">Connect your Twitter account to view analytics.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Instagram Analytics</h1>
+          <p className="text-muted-foreground">Connect your Instagram account to view analytics.</p>
         </div>
         
         <Card>
           <CardHeader>
             <CardTitle>Account Not Connected</CardTitle>
             <CardDescription>
-              You need to connect your Twitter account to view analytics and insights.
+              You need to connect your Instagram account to view analytics and insights.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center p-6">
@@ -84,12 +82,14 @@ export default function TwitterPage() {
                 strokeLinejoin="round"
                 className="h-8 w-8 text-muted-foreground"
               >
-                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium mb-2">Connect Twitter</h3>
+            <h3 className="text-lg font-medium mb-2">Connect Instagram</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Connect your Twitter account to access analytics, track growth, and measure engagement.
+              Connect your Instagram account to access analytics, track growth, and measure engagement.
             </p>
             <Link href="/dashboard/settings?tab=connections">
               <Button className="w-full">Go to Settings</Button>
@@ -104,8 +104,8 @@ export default function TwitterPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Twitter Analytics</h1>
-        <p className="text-muted-foreground">Detailed metrics and insights for your Twitter account.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Instagram Analytics</h1>
+        <p className="text-muted-foreground">Detailed metrics and insights for your Instagram account.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -131,32 +131,8 @@ export default function TwitterPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">30.8K</div>
-            <p className="text-xs text-muted-foreground">+9.6% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Impressions</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground h-4 w-4"
-            >
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">245.3K</div>
-            <p className="text-xs text-muted-foreground">+12.2% from last month</p>
+            <div className="text-2xl font-bold">21.5K</div>
+            <p className="text-xs text-muted-foreground">+9.1% from last month</p>
           </CardContent>
         </Card>
         <Card>
@@ -178,8 +154,32 @@ export default function TwitterPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3.2%</div>
-            <p className="text-xs text-muted-foreground">+0.4% from last month</p>
+            <div className="text-2xl font-bold">4.8%</div>
+            <p className="text-xs text-muted-foreground">+0.6% from last month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Reach</CardTitle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-muted-foreground h-4 w-4"
+            >
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">45.2K</div>
+            <p className="text-xs text-muted-foreground">+12.3% from last month</p>
           </CardContent>
         </Card>
         <Card>
@@ -197,24 +197,24 @@ export default function TwitterPage() {
               strokeLinejoin="round"
               className="text-muted-foreground h-4 w-4"
             >
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="10" r="3" />
-              <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12.4K</div>
-            <p className="text-xs text-muted-foreground">+7.8% from last month</p>
+            <div className="text-2xl font-bold">8.7K</div>
+            <p className="text-xs text-muted-foreground">+7.4% from last month</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="flex flex-wrap">
+        <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="audience">Audience</TabsTrigger>
-          <TabsTrigger value="tweets">Tweets</TabsTrigger>
-          <TabsTrigger value="mentions">Mentions</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="stories">Stories</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -231,7 +231,7 @@ export default function TwitterPage() {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="followers" stroke="#1DA1F2" />
+                      <Line type="monotone" dataKey="followers" stroke="#E1306C" />
                     </LineChart>
                   </ResponsiveContainer>
                 </Chart>
@@ -239,18 +239,18 @@ export default function TwitterPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Top Tweets</CardTitle>
-                <CardDescription>Best performing tweets by impressions</CardDescription>
+                <CardTitle>Content Distribution</CardTitle>
+                <CardDescription>Types of content posted</CardDescription>
               </CardHeader>
               <CardContent className="px-2">
                 <Chart>
                   <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={tweetPerformanceData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <BarChart data={contentData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="impressions" fill="#1DA1F2" />
+                      <Bar dataKey="value" fill="#E1306C" />
                     </BarChart>
                   </ResponsiveContainer>
                 </Chart>
@@ -260,7 +260,7 @@ export default function TwitterPage() {
           <Card>
             <CardHeader>
               <CardTitle>Engagement Metrics</CardTitle>
-              <CardDescription>Likes, retweets, and replies over time</CardDescription>
+              <CardDescription>Likes, comments, and shares over time</CardDescription>
             </CardHeader>
             <CardContent className="px-2">
               <Chart>
@@ -275,24 +275,24 @@ export default function TwitterPage() {
                       type="monotone"
                       dataKey="likes"
                       stackId="1"
-                      stroke="#1DA1F2"
-                      fill="#1DA1F2"
+                      stroke="#E1306C"
+                      fill="#E1306C"
                       fillOpacity={0.6}
                     />
                     <Area
                       type="monotone"
-                      dataKey="retweets"
+                      dataKey="comments"
                       stackId="1"
-                      stroke="#14171A"
-                      fill="#14171A"
+                      stroke="#833AB4"
+                      fill="#833AB4"
                       fillOpacity={0.6}
                     />
                     <Area
                       type="monotone"
-                      dataKey="replies"
+                      dataKey="shares"
                       stackId="1"
-                      stroke="#657786"
-                      fill="#657786"
+                      stroke="#405DE6"
+                      fill="#405DE6"
                       fillOpacity={0.6}
                     />
                   </AreaChart>
@@ -314,28 +314,28 @@ export default function TwitterPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="tweets" className="space-y-4">
+        <TabsContent value="content" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tweet Performance</CardTitle>
-              <CardDescription>Detailed metrics for your tweets</CardDescription>
+              <CardTitle>Content Performance</CardTitle>
+              <CardDescription>Top performing posts and content analysis</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Select the Tweets tab to view detailed tweet performance metrics.
+                Select the Content tab to view detailed content performance metrics.
               </p>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="mentions" className="space-y-4">
+        <TabsContent value="stories" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Mentions Analytics</CardTitle>
-              <CardDescription>Analysis of mentions and replies</CardDescription>
+              <CardTitle>Stories Analytics</CardTitle>
+              <CardDescription>Performance metrics for Instagram stories</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Select the Mentions tab to view detailed mentions analytics.
+                Select the Stories tab to view detailed stories analytics.
               </p>
             </CardContent>
           </Card>

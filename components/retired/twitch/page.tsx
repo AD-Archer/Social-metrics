@@ -51,7 +51,7 @@ const streamData = [
 ]
 
 export default function TwitchPage() {
-  const { accounts, isConnected } = useAccounts()
+  const { isConnected } = useAccounts()
   const isTwitchConnected = isConnected("twitch")
   
   // Not connected state
