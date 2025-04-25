@@ -22,6 +22,7 @@ import {
 } from "recharts"
 import { Button } from "@/components/ui/button"
 import { useAccounts } from "@/context/account-context"
+import { useRouter } from "next/navigation" // Import useRouter
 
 // Sample data for charts
 const overviewData = [
@@ -53,6 +54,7 @@ const platformColors = {
 export default function DashboardPage() {
   const { accounts } = useAccounts()
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter() // Initialize useRouter
 
   useEffect(() => {
     // Simulate loading
@@ -65,6 +67,14 @@ export default function DashboardPage() {
 
   const connectedAccounts = accounts.filter((account) => account.connected)
 
+  // Add a useEffect to handle redirection after loading and based on connected accounts
+  useEffect(() => {
+    // Only redirect if loading is complete and there are no connected accounts
+    if (!isLoading && connectedAccounts.length === 0) {
+      router.push("/welcome")
+    }
+  }, [isLoading, connectedAccounts, router])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -76,89 +86,18 @@ export default function DashboardPage() {
     )
   }
 
+  // If loading is done but we are redirecting, show nothing or a minimal loading state
+  // This prevents flashing the 'No Accounts Connected' content before redirecting
   if (connectedAccounts.length === 0) {
+    // Optionally, return a minimal loading indicator or null while redirecting
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Connect your social media accounts to see your analytics.</p>
+        <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Checking account status...</h2>
+            <p className="text-muted-foreground">Redirecting if necessary.</p>
+            </div>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>No Accounts Connected</CardTitle>
-              <CardDescription>Connect your social media accounts to start tracking your analytics.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center text-center p-6">
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <PlusCircle className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Connect Your First Account</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Add your social media accounts to see analytics, track growth, and measure engagement.
-              </p>
-              <Link href="/dashboard/settings">
-                <Button className="w-full">Go to Settings</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Demo Data Available</CardTitle>
-              <CardDescription>You can explore the dashboard with demo data to see how it works.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center text-center p-6">
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <BarChart3 className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">View Demo Analytics</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Explore sample analytics data to see how the dashboard works with connected accounts.
-              </p>
-              <Button variant="outline" className="w-full">
-                View Demo
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Need Help?</CardTitle>
-              <CardDescription>Learn how to connect your accounts and use the dashboard.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center text-center p-6">
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-8 w-8 text-muted-foreground"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                  <path d="M12 17h.01" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium mb-2">Getting Started Guide</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Check out our documentation to learn how to connect your accounts and use the dashboard.
-              </p>
-              <Button variant="outline" className="w-full">
-                View Guide
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
+    ); 
   }
 
   // Regular dashboard view with connected accounts

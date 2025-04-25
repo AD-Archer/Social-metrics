@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import SMLogo from "@/components/sm_logo"
+
 
 export default function SignupPage() {
   const router = useRouter()
@@ -24,7 +26,8 @@ export default function SignupPage() {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/dashboard")
+      // Redirect to login page instead of dashboard
+      router.push("/login")
     }, 1500)
   }
 
@@ -32,10 +35,8 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-              SM
-            </div>
+          <div className="flex justify-center mb-4">
+            <SMLogo className="h-15 w-15 mx-auto" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
           <CardDescription className="text-center">Enter your information to create your account</CardDescription>

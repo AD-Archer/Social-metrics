@@ -1,91 +1,128 @@
-import Link from "next/link"
+import Image from "next/image"
 import { ArrowRight, Instagram, Youtube, TwitterIcon as TikTok, Twitch, Twitter } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 
 export default function WelcomePage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">Welcome to SocialMetrics</h1>
-      <p className="text-xl mb-8">Connect your social media accounts to get started tracking your analytics.</p>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Instagram className="mr-2" /> Instagram
-            </CardTitle>
-            <CardDescription>Connect your Instagram account to track followers, engagement, and more.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Connect Instagram</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Youtube className="mr-2" /> YouTube
-            </CardTitle>
-            <CardDescription>Link your YouTube channel to monitor subscribers, views, and watch time.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Connect YouTube</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <TikTok className="mr-2" /> TikTok
-            </CardTitle>
-            <CardDescription>Add your TikTok account to track followers, likes, and video performance.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Connect TikTok</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Twitch className="mr-2" /> Twitch
-            </CardTitle>
-            <CardDescription>
-              Connect your Twitch channel to monitor followers, subscribers, and stream stats.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Connect Twitch</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Twitter className="mr-2" /> Twitter
-            </CardTitle>
-            <CardDescription>
-              Link your Twitter profile to track followers, engagement, and tweet performance.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Connect Twitter</Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-12 text-center">
-        <div className="flex flex-col items-center gap-4">
-          <Link href="/dashboard">
-            <Button size="lg" className="gap-2">
-              Go to Dashboard <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <p className="text-sm text-muted-foreground">
-            You can connect your accounts later from the dashboard settings.
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-pink-50 flex flex-col">
+      <div className="container mx-auto flex-1 flex flex-col justify-center items-center px-4 py-12">
+        <div className="flex flex-col items-center mb-10">
+          <div className="rounded-full bg-white shadow-lg p-2 mb-4">
+            {/* Use SM icon as logo */}
+            <div className="h-20 w-20 rounded-full bg-primary flex items-center justify-center text-4xl text-primary-foreground font-extrabold border-4 border-indigo-200">
+              SM
+            </div>
+          </div>
+          <h1 className="text-5xl font-extrabold text-gray-900 mb-3 text-center drop-shadow-sm">
+            Welcome to SocialMetrics!
+          </h1>
+          <p className="text-lg text-gray-600 text-center max-w-xl mb-2">
+            Your all-in-one dashboard for social media analytics. Connect your accounts and unlock powerful insights.
           </p>
+        </div>
+
+        <div className="w-full max-w-4xl">
+          <div className="mb-8 flex flex-col items-center">
+            <div className="flex items-center gap-2 text-base text-indigo-600 font-medium bg-indigo-50 rounded-full px-4 py-1 mb-2">
+              <span>Step 1</span>
+              <span className="w-1 h-1 bg-indigo-400 rounded-full" />
+              <span>Connect your social accounts</span>
+            </div>
+            <span className="text-sm text-gray-400">You can add more accounts later from settings.</span>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Instagram */}
+            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Instagram className="mr-2 text-pink-500" /> Instagram
+                </CardTitle>
+                <CardDescription>Track followers, engagement, and more.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/dashboard/settings">
+                  <Button className="w-full" variant="outline">Connect Instagram</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* YouTube */}
+            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Youtube className="mr-2 text-red-500" /> YouTube
+                </CardTitle>
+                <CardDescription>Monitor subscribers, views, and watch time.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/dashboard/settings">
+                  <Button className="w-full" variant="outline">Connect YouTube</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* TikTok */}
+            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TikTok className="mr-2 text-black" /> TikTok
+                </CardTitle>
+                <CardDescription>Track followers, likes, and video performance.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/dashboard/settings">
+                  <Button className="w-full" variant="outline">Connect TikTok</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Twitch */}
+            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Twitch className="mr-2 text-purple-500" /> Twitch
+                </CardTitle>
+                <CardDescription>Monitor followers, subscribers, and stream stats.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/dashboard/settings">
+                  <Button className="w-full" variant="outline">Connect Twitch</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Twitter */}
+            <Card className="transition-transform hover:scale-105 hover:shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Twitter className="mr-2 text-sky-500" /> Twitter
+                </CardTitle>
+                <CardDescription>Track followers, engagement, and tweet performance.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/dashboard/settings">
+                  <Button className="w-full" variant="outline">Connect Twitter</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <div className="mt-14 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <Link href="/dashboard">
+              <Button size="lg" className="gap-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white shadow-lg hover:from-indigo-600 hover:to-pink-600">
+                Go to Dashboard <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <p className="text-sm text-gray-400">
+              You can connect your accounts later from the dashboard settings.
+            </p>
+          </div>
         </div>
       </div>
     </div>
