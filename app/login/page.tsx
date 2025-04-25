@@ -51,7 +51,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="#" className="text-sm text-primary underline underline-offset-4 hover:text-primary/90">
+                <Link href="#" className="text-sm text-primary underline underline-offset-4 hover:text-primary/90" onClick={e => { e.preventDefault(); alert('Password reset is not available at this time. Please contact support staff.'); }}>
                   Forgot password?
                 </Link>
               </div>

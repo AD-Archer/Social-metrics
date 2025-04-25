@@ -1,4 +1,9 @@
 "use client"
+/**
+ * Note to self remember to acctually implement the logout functionality we are just gonna have a redirect
+ * for now
+ */
+
 
 import type React from "react"
 
@@ -34,6 +39,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose } from "@/components/ui/toast"
 import { useToast } from "@/hooks/use-toast"
 
+
 export default function DashboardLayout({
   children,
 }: {
@@ -53,6 +59,13 @@ export default function DashboardLayout({
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ]
 
+  // Local SM logo for dashboard header only
+  const DashboardHeaderSMLogo = ({ className = "" }: { className?: string }) => (
+    <div className={`rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center border border-indigo-300 ${className}`}>
+      <span className="text-sm font-bold text-white leading-none select-none">SM</span>
+    </div>
+  )
+
   return (
     <div className="flex min-h-screen flex-col">
       <ToastProvider>
@@ -66,9 +79,7 @@ export default function DashboardLayout({
             </SheetTrigger>
             <SheetContent side="left" className="w-72">
               <div className="flex items-center gap-2 font-bold mb-8">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                  SM
-                </div>
+                <DashboardHeaderSMLogo className="h-7 w-7" />
                 <span>SocialMetrics</span>
               </div>
               <nav className="grid gap-2">
@@ -91,9 +102,7 @@ export default function DashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="flex items-center gap-2 font-bold">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-              SM
-            </div>
+            <DashboardHeaderSMLogo className="h-7 w-7" />
             <span className="hidden md:inline-block">SocialMetrics</span>
           </div>
           <div className="flex-1"></div>
@@ -118,16 +127,16 @@ export default function DashboardLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings' }}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings' }}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { window.location.href = '/' }}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

@@ -11,8 +11,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import SMLogo from "@/components/sm_logo"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog"
 
+import SMLogo from "@/components/sm_logo"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -86,14 +94,9 @@ export default function SignupPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm text-muted-foreground">
-            By creating an account, you agree to our{" "}
-            <Link href="#" className="underline underline-offset-4 hover:text-primary">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="#" className="underline underline-offset-4 hover:text-primary">
-              Privacy Policy
-            </Link>
+            By creating an account, you agree to our{' '}
+            <TermsOfServiceDialog />{' '}and{' '}
+            <PrivacyPolicyDialog />
             .
           </div>
           <div className="text-center text-sm">
@@ -107,3 +110,45 @@ export default function SignupPage() {
     </div>
   )
 }
+
+// Terms of Service and Privacy Policy
+const TermsOfServiceDialog = () => (
+  <Dialog>
+    <DialogTrigger asChild>
+      <span className="underline underline-offset-4 hover:text-primary cursor-pointer" title="View Terms of Service">
+        Terms of Service
+      </span>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Terms of Service</DialogTitle>
+        <DialogDescription>
+          Welcome to SocialMetrics! By creating an account, you agree to abide by our terms and conditions. You must not misuse the service, attempt unauthorized access, or violate any applicable laws. We reserve the right to suspend accounts for violations. For full details, please contact support.
+        </DialogDescription>
+      </DialogHeader>
+    </DialogContent>
+  </Dialog>
+)
+
+const PrivacyPolicyDialog = () => (
+  <Dialog>
+    <DialogTrigger asChild>
+      <span className="underline underline-offset-4 hover:text-primary cursor-pointer" title="View Privacy Policy">
+        Privacy Policy
+      </span>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Privacy Policy</DialogTitle>
+        <DialogDescription>
+          Your privacy is important to us. We collect only the data necessary to provide our services and never share your personal information with third parties without your consent. For more information, please contact support. 
+        </DialogDescription>
+      </DialogHeader>
+    </DialogContent>
+  </Dialog>
+)
+
+
+
+// Example usage:
+// <LocalSMLogo className="h-10 w-10" />
