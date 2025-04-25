@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen w-full bg-background text-foreground animate-fade-in`}>
         <AccountProvider>{children}</AccountProvider>
       </body>
     </html>

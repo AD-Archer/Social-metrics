@@ -22,122 +22,98 @@ const overviewData = [
 export default function DashboardPage() {
   const { accounts } = useAccounts()
   const [isLoading, setIsLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const youtubeAccount = accounts.find((a) => a.platform === "youtube" && a.connected)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
-    return () => clearTimeout(timer)
+    setMounted(true)
   }, [])
 
-  const youtubeAccount = accounts.find((account) => account.platform === "youtube")
-  const isYoutubeConnected = youtubeAccount?.connected
-
-  useEffect(() => {
-    if (!isLoading && !isYoutubeConnected) {
-      router.push("/welcome")
-    }
-  }, [isLoading, isYoutubeConnected, router])
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Loading your dashboard...</h2>
-          <p className="text-muted-foreground">Please wait while we fetch your data.</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isYoutubeConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Checking account status...</h2>
-          <p className="text-muted-foreground">Redirecting if necessary.</p>
-        </div>
-      </div>
-    )
-  }
-
-  // YouTube-only dashboard view
+  // Add gradient background and center content
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">YouTube Dashboard</h1>
-        <p className="text-muted-foreground">Your YouTube analytics overview.</p>
+    <div className="w-full flex flex-col items-center px-2">
+      {/* Header */}
+      <div className="mb-8 text-center animate-fade-in w-full max-w-3xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-primary">Social Dashboard</h1>
+        <p className="text-lg text-muted-foreground mt-2">Your YouTube analytics overview.</p>
       </div>
-
-      {/* YouTube Account Summary */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Youtube className="h-4 w-4" /> YouTube
-            </CardTitle>
-            <div className={`h-2 w-2 rounded-full ${isYoutubeConnected ? "bg-green-500" : "bg-gray-300"}`}></div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{youtubeAccount?.followers?.toLocaleString() ?? "-"}</div>
-            <p className="text-xs text-muted-foreground">Subscribers</p>
-          </CardContent>
-        </Card>
-        {/* Add more YouTube-specific summary cards here if needed */}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Youtube className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{youtubeAccount?.views?.toLocaleString() ?? "-"}</div>
-            <p className="text-xs text-muted-foreground">+18.7% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
-            <Youtube className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+14.2%</div>
-            <p className="text-xs text-muted-foreground">+2.3% from last month</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="youtube" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="youtube">YouTube</TabsTrigger>
-        </TabsList>
-        <TabsContent value="youtube" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Audience Growth</CardTitle>
-              <CardDescription>Subscriber growth over time</CardDescription>
-            </CardHeader>
-            <CardContent className="px-2">
-              <Chart>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={overviewData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="youtube" stroke="#FF0000" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Chart>
-            </CardContent>
-          </Card>
-          {/* Add more YouTube analytics cards here if needed */}
-        </TabsContent>
-      </Tabs>
+      {/* Cards with glassmorphism effect */}
+      {youtubeAccount ? (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl mb-6 justify-center mx-auto">
+            <Card className="glass-card hover:scale-[1.03] transition-transform duration-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Youtube className="h-4 w-4" /> YouTube
+                </CardTitle>
+                {mounted && (
+                  <div className={`h-2 w-2 rounded-full bg-green-500`}></div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold animate-count">{youtubeAccount.followers?.toLocaleString() ?? "-"}</div>
+                <p className="text-xs text-muted-foreground">Subscribers</p>
+              </CardContent>
+            </Card>
+            {/* Add more summary cards here if needed */}
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 w-full max-w-4xl mb-6 justify-center mx-auto">
+            <Card className="glass-card hover:scale-[1.03] transition-transform duration-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+                <Youtube className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{youtubeAccount.views?.toLocaleString() ?? "-"}</div>
+                <p className="text-xs text-muted-foreground">+18.7% from last month</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card hover:scale-[1.03] transition-transform duration-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
+                <Youtube className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">+14.2%</div>
+                <p className="text-xs text-muted-foreground">+2.3% from last month</p>
+              </CardContent>
+            </Card>
+          </div>
+          <Tabs defaultValue="youtube" className="space-y-4 w-full max-w-4xl animate-fade-in">
+            <TabsList>
+              <TabsTrigger value="youtube">YouTube</TabsTrigger>
+            </TabsList>
+            <TabsContent value="youtube" className="space-y-4">
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle>Audience Growth</CardTitle>
+                  <CardDescription>Subscriber growth over time</CardDescription>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <Chart>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart data={overviewData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="youtube" stroke="#FF0000" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </Chart>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      ) : (
+        <div className="w-full max-w-2xl mx-auto text-center py-20">
+          <h2 className="text-2xl font-semibold text-muted-foreground mb-4">No connected YouTube account</h2>
+          <p className="text-muted-foreground mb-6">Connect your YouTube account in settings to see your dashboard analytics.</p>
+        </div>
+      )}
     </div>
   )
 }

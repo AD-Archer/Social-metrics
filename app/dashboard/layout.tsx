@@ -52,7 +52,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <ToastProvider>
-        <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/80 glass-card px-4 md:px-6 backdrop-blur-md">
           <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
@@ -126,8 +126,8 @@ export default function DashboardLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <div className="flex flex-1">
-          <aside className="hidden w-64 shrink-0 border-r md:block">
+        <div className="flex flex-1 justify-center">
+          <aside className="hidden w-64 shrink-0 border-r md:block glass-card bg-sidebar-background/90 backdrop-blur-xl shadow-2xl border-l-4 border-l-primary/40">
             <div className="flex h-full flex-col gap-2 p-4">
               <nav className="grid gap-1">
                 {navigation.map((item) => (
@@ -147,7 +147,7 @@ export default function DashboardLayout({
               </nav>
             </div>
           </aside>
-          <main className="flex-1 p-4 md:p-6">{children}</main>
+          <main className="flex-1 max-w-5xl mx-auto p-4 md:p-8 flex flex-col items-center justify-start">{children}</main>
         </div>
 
         {/* Toast notifications */}
