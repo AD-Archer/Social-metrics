@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Chart } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { useAccounts } from "@/context/account-context"
-import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
 const overviewData = [
@@ -21,9 +20,7 @@ const overviewData = [
 
 export default function DashboardPage() {
   const { accounts } = useAccounts()
-  const [isLoading, setIsLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  const router = useRouter()
   const youtubeAccount = accounts.find((a) => a.platform === "youtube" && a.connected)
 
   useEffect(() => {
