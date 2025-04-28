@@ -1,0 +1,294 @@
+/**
+ * YouTube RSS Help component providing detailed instructions on how to properly
+ * configure a YouTube RSS feed URL using a channel ID. Includes step-by-step guidance
+ * with visual examples and validation for common URL format errors.
+ */
+"use client"
+
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Info,
+} from "lucide-react"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+
+// Sample channel ID for example purposes
+const SAMPLE_CHANNEL_ID = "UC_x5XG1OV2P6uZZ5FSM9Ttw" // Google Developers channel ID
+
+interface YouTubeRssHelpProps {
+  currentUrl?: string;
+}
+
+export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
+  const [copied, setCopied] = useState(false)
+  const [testUrl, setTestUrl] = useState(currentUrl || "")
+  const [validationResult, setValidationResult] = useState<{
+    isValid: boolean;
+    message: string;
+  } | null>(null)
+
+  // Copy template URL to clipboard
+  const handleCopyTemplate = () => {
+    navigator.clipboard.writeText(`https://www.youtube.com/feeds/videos.xml?channel_id=${SAMPLE_CHANNEL_ID}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Validate the input URL format
+  const validateUrl = () => {
+    if (!testUrl) {
+      setValidationResult({
+        isValid: false,
+        message: "Please enter a URL to validate"
+      })
+      return
+    }
+
+    try {
+      const url = new URL(testUrl)
+      
+      // Check if it's a YouTube feeds URL
+      if (!url.hostname.includes("youtube.com") || !url.pathname.includes("feeds/videos.xml")) {
+        setValidationResult({
+          isValid: false,
+          message: "Not a valid YouTube RSS feed URL. URL must include youtube.com/feeds/videos.xml"
+        })
+        return
+      }
+
+      // Check if it uses channel_id parameter
+      const channelId = url.searchParams.get("channel_id")
+      if (!channelId) {
+        setValidationResult({
+          isValid: false,
+          message: "Missing channel_id parameter. URL must contain ?channel_id=YOUR_CHANNEL_ID"
+        })
+        return
+      }
+
+      // Check if using channel name/handle format (@username)
+      if (testUrl.includes("@")) {
+        setValidationResult({
+          isValid: false,
+          message: "URL contains @ symbol. Use channel_id format instead of username/handle"
+        })
+        return
+      }
+
+      setValidationResult({
+        isValid: true,
+        message: "Valid YouTube RSS feed URL format!"
+      })
+    } catch {
+      setValidationResult({
+        isValid: false,
+        message: "Invalid URL format"
+      })
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Alert variant="info" className="bg-blue-50 dark:bg-blue-950/30">
+        <Info className="h-4 w-4" />
+        <AlertTitle>YouTube RSS Feed Configuration</AlertTitle>
+        <AlertDescription>
+          To display your YouTube videos in the dashboard, you need to use the correct RSS feed URL format with your channel ID.
+        </AlertDescription>
+      </Alert>
+
+      <div className="space-y-3 rounded-md border p-4">
+        <div className="flex flex-col gap-2">
+          <h3 className="font-medium text-sm">Required Format</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+              https://www.youtube.com/feeds/videos.xml?channel_id=YOUR_CHANNEL_ID
+            </code>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyTemplate}
+              className="h-7 gap-1"
+            >
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
+            </Button>
+          </div>
+        </div>
+
+        {currentUrl && currentUrl.includes("@") && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Invalid URL Format</AlertTitle>
+            <AlertDescription>
+              Your current URL uses a username/handle format (@username). You need to use a channel ID instead.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="mt-4 space-y-2">
+          <label htmlFor="test-url" className="text-sm font-medium">
+            Validate Your RSS URL
+          </label>
+          <div className="flex gap-2">
+            <Input
+              id="test-url"
+              value={testUrl}
+              onChange={(e) => setTestUrl(e.target.value)}
+              placeholder="Enter your YouTube RSS URL to validate"
+              className="flex-1"
+            />
+            <Button onClick={validateUrl}>Validate</Button>
+          </div>
+          {validationResult && (
+            <div className={`text-sm ${validationResult.isValid ? "text-green-600" : "text-red-600"}`}>
+              {validationResult.isValid ? (
+                <span className="flex items-center gap-1">
+                  <Check className="h-4 w-4" /> {validationResult.message}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" /> {validationResult.message}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="find-channel-id">
+          <AccordionTrigger className="text-sm font-medium">
+            How to find your YouTube Channel ID
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3 text-sm">
+              <p>There are several ways to find your YouTube Channel ID:</p>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Method 1: From YouTube Studio</h4>
+                <ol className="list-decimal list-inside space-y-1 pl-2">
+                  <li>Log in to <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">YouTube Studio</a></li>
+                  <li>Click on "Settings" (gear icon) in the bottom-left corner</li>
+                  <li>Select "Channel" from the left sidebar</li>
+                  <li>Click on "Advanced settings"</li>
+                  <li>Your Channel ID appears under "Channel ID"</li>
+                </ol>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Method 2: From your channel page source</h4>
+                <ol className="list-decimal list-inside space-y-1 pl-2">
+                  <li>Go to your YouTube channel page</li>
+                  <li>View the page source (right-click > "View Page Source")</li>
+                  <li>Search for "channelId"</li>
+                  <li>The ID will appear as: <code className="bg-muted px-1">channelId":"UC..."</code></li>
+                </ol>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Method 3: From a video page</h4>
+                <ol className="list-decimal list-inside space-y-1 pl-2">
+                  <li>Go to any of your uploaded videos</li>
+                  <li>Click on your channel name under the video</li>
+                  <li>Look at the URL in your browser's address bar</li>
+                  <li>If it shows <code className="bg-muted px-1">youtube.com/channel/UC...</code>, the part after "/channel/" is your Channel ID</li>
+                </ol>
+              </div>
+              
+              <div className="mt-4">
+                <Badge variant="outline" className="mr-2">Note</Badge>
+                <span>Your Channel ID always starts with "UC" followed by a string of letters and numbers.</span>
+              </div>
+              
+              <div className="pt-2 flex justify-end">
+                <a 
+                  href="https://support.google.com/youtube/answer/3250431" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline inline-flex items-center gap-1 text-sm"
+                >
+                  YouTube Help <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="common-errors">
+          <AccordionTrigger className="text-sm font-medium">
+            Common RSS Configuration Errors
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4 text-sm">
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Using channel username/handle instead of channel ID
+                </h4>
+                <div className="pl-6 space-y-1">
+                  <p><strong>Incorrect:</strong></p>
+                  <code className="block bg-muted p-2 rounded text-red-500">
+                    https://www.youtube.com/feeds/videos.xml?user=@YourChannelName
+                  </code>
+                  <p className="pt-1"><strong>Correct:</strong></p>
+                  <code className="block bg-muted p-2 rounded text-green-500">
+                    https://www.youtube.com/feeds/videos.xml?channel_id=UCxxxxxxxxxxxxxxxxxxxxxx
+                  </code>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Using a normal YouTube URL instead of the RSS feed URL
+                </h4>
+                <div className="pl-6 space-y-1">
+                  <p><strong>Incorrect:</strong></p>
+                  <code className="block bg-muted p-2 rounded text-red-500">
+                    https://www.youtube.com/channel/UCxxxxxxxxxxxxxxxxxxxxxx
+                  </code>
+                  <p className="pt-1"><strong>Correct:</strong></p>
+                  <code className="block bg-muted p-2 rounded text-green-500">
+                    https://www.youtube.com/feeds/videos.xml?channel_id=UCxxxxxxxxxxxxxxxxxxxxxx
+                  </code>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Missing the "channel_id=" parameter
+                </h4>
+                <div className="pl-6 space-y-1">
+                  <p><strong>Incorrect:</strong></p>
+                  <code className="block bg-muted p-2 rounded text-red-500">
+                    https://www.youtube.com/feeds/videos.xml?UCxxxxxxxxxxxxxxxxxxxxxx
+                  </code>
+                  <p className="pt-1"><strong>Correct:</strong></p>
+                  <code className="block bg-muted p-2 rounded text-green-500">
+                    https://www.youtube.com/feeds/videos.xml?channel_id=UCxxxxxxxxxxxxxxxxxxxxxx
+                  </code>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  )
+}

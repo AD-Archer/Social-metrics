@@ -5,50 +5,56 @@
 # and then runs the linting and build commands defined in package.json.
 # This helps catch errors and style issues before they are merged into the main codebase.
 
-name: Node.js CI
+name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build_and_lint:
-    # I'll specify the runner environment
-    runs-on: ubuntu-latest 
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Check out the repository code so the workflow can access it
-    - name: Checkout code
-      uses: actions/checkout@v4 
-
-    # Step 2: Set up the pnpm package manager
-    # Using pnpm/action-setup is the standard way to use pnpm in GitHub Actions
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 9 # Using the latest major version of pnpm
-
-    # Step 3: Set up the Node.js environment
-    # I'll use Node.js 20.x, which is the current LTS version as of April 2025
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'pnpm' # Enable caching for pnpm to speed up dependency installation
-
-    # Step 4: Install project dependencies
-    # This command reads pnpm-lock.yaml and installs the exact dependencies
-    - name: Install dependencies
-      run: pnpm install
-
-    # Step 5: Run the linter
-    # This executes the 'lint' script defined in package.json ('next lint')
-    - name: Run linter
-      run: pnpm lint
-
-    # I want to ensure types are valid before building
-    - name: Run type check
-      run: pnpm typecheck
-
-    - name: Run build
-      run: pnpm build
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          
+      - name: Get pnpm cache directory
+        id: pnpm-cache
+        run: |
+          echo "dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+      
+      - uses: actions/cache@v4
+        name: Cache pnpm dependencies
+        with:
+          path: ${{ steps.pnpm-cache.outputs.dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+            
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Run TypeScript type checking
+        run: pnpm typecheck
+        
+      - name: Run ESLint
+        run: pnpm lint
+        
+      - name: Build project
+        run: pnpm build
+        env:
+          # Add minimal env vars needed for build
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}

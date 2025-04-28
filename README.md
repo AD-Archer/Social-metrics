@@ -34,13 +34,10 @@ Social Dashboard offers a unified Next.js-based interface that integrates Google
 - Responsive layout powered by Tailwind CSS and Radix UI primitives.
 - User settings page for profile updates and preferences.
 - CI pipeline ensures code quality via GitHub Actions (lint, typecheck, build).
+- YouTube RSS feed integration for displaying recent content.
 
 ### Value Proposition
 By consolidating metrics in one dashboard, users save time on data collection, reduce login friction, and gain actionable insights faster than with siloed platform dashboards.
-
-### AI Implementation
-
-
 
 ---
 
@@ -55,80 +52,10 @@ By consolidating metrics in one dashboard, users save time on data collection, r
 
 ---
 
-## Technical Implementation
+## Firebase Setup
 
-### Wireframes & System Architecture
-
-
-
-### Database Schema
-
-
-
-### AI Model Details
-
-
-
----
-
-## User Interface and Experience
-
-### User Journey
-1. User arrives at the application  
-2. User signs in with Google  
-3. Dashboard loads personalized social metrics  
-4. User navigates to settings or YouTube analytics page
-
-### Key Screens and Components
-
-#### Screen 1: Dashboard
-
-
-
-#### Screen 2: Settings
-
-
-
-### Responsive Design Approach
-
-
-
-### Accessibility Considerations
-
-
-
----
-
-## Testing and Quality Assurance
-
-### Testing Approach
-
-
-
-### Unit Tests
-
-
-
-### Integration Tests
-
-
-
-### User Testing Results
-
-
-
-### Known Issues and Limitations
-
-
-
----
-
-## Deployment
-
-### Deployment Architecture
-Hosted on Vercel with automatic builds triggered on git pushes to main.
-
-### Environment Variables
+### Client-Side Firebase
+Environment variables needed in `.env.local`:
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
@@ -138,9 +65,56 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 ```
 
-### Build and Deployment Process
+### Server-Side Firebase Admin
+Firebase Admin SDK is used for API routes to access Firestore securely. Add these environment variables:
+```env
+FIREBASE_ADMIN_PROJECT_ID=
+FIREBASE_ADMIN_CLIENT_EMAIL=
+FIREBASE_ADMIN_PRIVATE_KEY=
+```
 
+To generate a Firebase Admin service account:
+1. Go to Firebase Console > Project Settings > Service Accounts
+2. Click "Generate new private key"
+3. Copy values from the downloaded JSON file to your environment variables
+4. Make sure to handle newlines in the private key properly (replace `\n` with actual newlines)
 
+---
+
+## Development
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/ad-archer/social-dash.git
+cd social-dash
+
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your values
+
+# Run development server
+pnpm dev
+```
+
+### Firebase Rules
+The project includes Firestore security rules in `/firebase/rules/firestores.rules`. Deploy these using:
+```bash
+firebase deploy --only firestore:rules
+```
+
+---
+
+## Deployment
+
+### Deployment Architecture
+Hosted on Vercel with automatic builds triggered on git pushes to main.
+
+### Environment Variables
+Make sure to set all the environment variables mentioned in the Firebase Setup section in your production environment.
 
 ---
 
