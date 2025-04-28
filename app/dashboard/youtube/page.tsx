@@ -1,345 +1,269 @@
-"use client"
+/**
+ * YouTube dashboard page component displaying RSS feed content and channel stats.
+ * Fetches YouTube RSS feed data from the configured URL in user settings,
+ * processes and displays recent videos with publication dates and links.
+ * Uses client-side Firestore queries for better authentication handling.
+ */
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Chart } from "@/components/ui/chart"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { useAccounts } from "@/context/account-context"
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
+import { useState, useEffect } from 'react';
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ExternalLink, AlertCircle, Settings } from 'lucide-react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { Button } from "@/components/ui/button";
+import { useAccounts } from "@/context/account-context";
+import { useToast } from "@/components/ui/use-toast";
 
-// Sample data for YouTube charts
-const subscriberData = [
-  { name: "Jan", subscribers: 24500 },
-  { name: "Feb", subscribers: 26800 },
-  { name: "Mar", subscribers: 29200 },
-  { name: "Apr", subscribers: 32100 },
-  { name: "May", subscribers: 35400 },
-  { name: "Jun", subscribers: 38900 },
-  { name: "Jul", subscribers: 42300 },
-]
-
-const viewsData = [
-  { name: "Jan", views: 142000, watchTime: 8500 },
-  { name: "Feb", views: 158000, watchTime: 9200 },
-  { name: "Mar", views: 187000, watchTime: 10800 },
-  { name: "Apr", views: 215000, watchTime: 12400 },
-  { name: "May", views: 243000, watchTime: 14100 },
-  { name: "Jun", views: 278000, watchTime: 16300 },
-  { name: "Jul", views: 312000, watchTime: 18500 },
-]
-
-const contentTypeData = [
-  { name: "Tutorials", value: 45 },
-  { name: "Vlogs", value: 25 },
-  { name: "Reviews", value: 20 },
-  { name: "Shorts", value: 10 },
-]
+// Interface for RSS feed items returned from the API
+interface RssFeedItem {
+  title?: string;
+  link?: string;
+  pubDate?: string;
+  isoDate?: string;
+  guid?: string;
+}
 
 export default function YoutubePage() {
-  const { isConnected } = useAccounts()
-  const isYoutubeConnected = isConnected("youtube")
+  const [user, loadingAuth] = useAuthState(auth);
+  const [feedItems, setFeedItems] = useState<RssFeedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rssConfigured, setRssConfigured] = useState(false);
+  const { accounts } = useAccounts();
+  const { toast } = useToast();
+  
+  const youtubeAccount = accounts.find((a) => a.platform === "youtube" && a.connected);
 
-  // Not connected state
-  if (!isYoutubeConnected) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">YouTube Analytics</h1>
-          <p className="text-muted-foreground">Connect your YouTube account to view analytics.</p>
-        </div>
+  useEffect(() => {
+    if (!loadingAuth && user) {
+      const fetchFeed = async () => {
+        setIsLoading(true);
+        setError(null);
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Not Connected</CardTitle>
-            <CardDescription>
-              You need to connect your YouTube account to view analytics and insights.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center text-center p-6">
-            <div className="rounded-full bg-muted p-6 mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-8 w-8 text-muted-foreground"
-              >
-                <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-                <path d="m10 15 5-3-5-3z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium mb-2">Connect YouTube</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Connect your YouTube account to access analytics, track growth, and measure engagement.
-            </p>
-            <Link href="/dashboard/settings?tab=connections">
-              <Button className="w-full">Go to Settings</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+        try {
+          // First check if the RSS URL is configured using client-side Firestore
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const rssUrl = userData?.connections?.youtubeRssUrl;
+            
+            if (rssUrl) {
+              setRssConfigured(true);
+              
+              // Fetch from the API with credentials
+              const response = await fetch(`/api/youtube/rss?userId=${user.uid}`, {
+                credentials: 'include',
+                cache: 'no-store',
+                headers: {
+                  'Content-Type': 'application/json',
+                }
+              });
+              
+              if (!response.ok) {
+                if (response.status === 400 && rssUrl.includes('@')) {
+                  // Handle username format error
+                  const data = await response.json();
+                  
+                  if (data.extractedUsername) {
+                    toast({
+                      title: "Invalid RSS URL format",
+                      description: `The URL you provided is not in the correct format. You need to use the Channel ID version.`,
+                      variant: "destructive"
+                    });
+                    
+                    throw new Error(`You need to use the YouTube RSS format with channel_id. Check settings for more info.`);
+                  }
+                }
+                
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+              }
+              
+              const data = await response.json();
+              
+              // Sort items by date, newest first
+              const sortedItems = (data.items || []).sort((a: RssFeedItem, b: RssFeedItem) => {
+                const dateA = a.isoDate ? new Date(a.isoDate).getTime() : 0;
+                const dateB = b.isoDate ? new Date(b.isoDate).getTime() : 0;
+                return dateB - dateA;
+              });
+              
+              setFeedItems(sortedItems);
+            } else {
+              setRssConfigured(false);
+            }
+          } else {
+            setError("User document not found in Firestore");
+          }
+        } catch (err: any) {
+          console.error("Failed to fetch YouTube RSS feed:", err);
+          setError(err.message || "An unknown error occurred while fetching the feed.");
+          setFeedItems([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-  // Connected state - show analytics
+      fetchFeed();
+    } else if (!loadingAuth && !user) {
+      setError("User not authenticated. Please log in.");
+      setIsLoading(false);
+    }
+  }, [user, loadingAuth, toast]);
+
+  // Helper function to format date strings
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return dateString; 
+    }
+  };
+
+  // Function to render the main content based on state
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      // Special handling for permissions errors to provide clearer guidance
+      const isPermissionError = error.toLowerCase().includes("permission");
+      const configError = error.toLowerCase().includes("configured") || error.toLowerCase().includes("url");
+      
+      return (
+        <Alert variant={isPermissionError ? "destructive" : "default"}>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{isPermissionError ? "Permission Error" : "Error Fetching Feed"}</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-2">
+              <p>{error}</p>
+              {(isPermissionError || configError) && (
+                <p>
+                  Please check your <Link href="/dashboard/settings?tab=connections" className="underline">settings</Link> and ensure your RSS feed URL is correctly configured.
+                </p>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (!rssConfigured) {
+      return (
+        <div className="text-center py-6">
+          <p className="text-muted-foreground mb-4">
+            You haven't configured your YouTube RSS feed URL yet.
+          </p>
+          <Link href="/dashboard/settings?tab=connections">
+            <Button>Configure YouTube RSS Feed</Button>
+          </Link>
+        </div>
+      );
+    }
+    
+    if (feedItems.length === 0) {
+      return (
+        <div className="text-center py-6">
+          <p className="text-muted-foreground">
+            No videos found in your RSS feed. Ensure your YouTube RSS feed URL is correctly set in <Link href="/dashboard/settings?tab=connections" className="underline">Settings</Link>.
+          </p>
+        </div>
+      );
+    }
+
+    // Display feed items in a table
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Video Title</TableHead>
+            <TableHead className="text-right">Published Date</TableHead>
+            <TableHead className="w-[50px] text-right"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {feedItems.map((item) => (
+            <TableRow key={item.guid || item.link} className="group hover:bg-muted/50">
+              <TableCell className="font-medium">{item.title || 'No Title'}</TableCell>
+              <TableCell className="text-right text-muted-foreground">
+                {formatDate(item.pubDate || item.isoDate)}
+              </TableCell>
+              <TableCell className="text-right">
+                {item.link && (
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Watch on YouTube"
+                    className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span className="sr-only">Watch video</span>
+                  </a>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">YouTube Analytics</h1>
-        <p className="text-muted-foreground">Detailed metrics and insights for your YouTube channel.</p>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">YouTube Dashboard</h1>
+          <p className="text-muted-foreground">Manage and track your YouTube content</p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-2 rounded-full ${youtubeAccount ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+          <p className="text-sm text-muted-foreground">
+            {youtubeAccount ? "Connected" : "Not Connected"}
+          </p>
+          <Link href="/dashboard/settings?tab=connections">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground h-4 w-4"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">42.3K</div>
-            <p className="text-xs text-muted-foreground">+8.7% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Views</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground h-4 w-4"
-            >
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">312K</div>
-            <p className="text-xs text-muted-foreground">+12.2% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Watch Time (hrs)</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground h-4 w-4"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">18.5K</div>
-            <p className="text-xs text-muted-foreground">+13.5% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. View Duration</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground h-4 w-4"
-            >
-              <path d="M12 2v4" />
-              <path d="M12 18v4" />
-              <path d="m4.93 4.93 2.83 2.83" />
-              <path d="m16.24 16.24 2.83 2.83" />
-              <path d="M2 12h4" />
-              <path d="M18 12h4" />
-              <path d="m4.93 19.07 2.83-2.83" />
-              <path d="m16.24 7.76 2.83-2.83" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3:42</div>
-            <p className="text-xs text-muted-foreground">+0:18 from last month</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="flex flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="audience">Audience</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscriber Growth</CardTitle>
-                <CardDescription>Total subscribers over time</CardDescription>
-              </CardHeader>
-              <CardContent className="px-2">
-                <Chart>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <LineChart data={subscriberData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="subscribers" stroke="#FF0000" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Chart>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Distribution</CardTitle>
-                <CardDescription>Types of content posted</CardDescription>
-              </CardHeader>
-              <CardContent className="px-2">
-                <Chart>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={contentTypeData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#FF0000" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </Chart>
-              </CardContent>
-            </Card>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Views & Watch Time</CardTitle>
-              <CardDescription>Total views and watch time over time</CardDescription>
-            </CardHeader>
-            <CardContent className="px-2">
-              <Chart>
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={viewsData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Area
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="views"
-                      stroke="#FF0000"
-                      fill="#FF0000"
-                      fillOpacity={0.6}
-                    />
-                    <Area
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="watchTime"
-                      stroke="#282828"
-                      fill="#282828"
-                      fillOpacity={0.6}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Chart>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="audience" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Audience Demographics</CardTitle>
-              <CardDescription>Age, gender, and location breakdown</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Select the Audience tab to view detailed audience demographics.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="content" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content Performance</CardTitle>
-              <CardDescription>Top performing videos and content analysis</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Select the Content tab to view detailed content performance metrics.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="revenue" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Analytics</CardTitle>
-              <CardDescription>Ad revenue, channel memberships, and Super Chat</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Select the Revenue tab to view detailed revenue analytics.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* YouTube RSS Feed Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Videos</CardTitle>
+          <CardDescription>
+            Latest videos published on your YouTube channel
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderContent()}
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

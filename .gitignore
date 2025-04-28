@@ -36,3 +36,5 @@ next-env.d.ts
 # Macos 
 .DS_Store
 copilot-instructions.md
+firebase-debug.log
+ad-archer-socialmetrics-firebase-adminsdk-fbsvc-28c72bd7d6.json
