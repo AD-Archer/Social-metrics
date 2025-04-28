@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Signup page component. Allows users to create an account using Google OAuth.
+ * This page uses the AuthContext for handling Google sign-up and redirects users
+ * to the welcome page upon successful sign-up.
+ */
 "use client"
 
 import type React from "react"
@@ -5,12 +10,10 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Mail, User, AlertCircle } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogTrigger,
@@ -26,33 +29,9 @@ import SMLogo from "@/components/sm_logo"
 
 export default function SignupPage() {
   const router = useRouter()
-  const { signUp, signInWithGoogle, updateUserProfile } = useAuth()
+  const { signInWithGoogle } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
-    try {
-      const result = await signUp(email, password)
-      if (result.user) {
-        // Update user profile with name
-        await updateUserProfile(name)
-        router.push("/welcome")
-      }
-    } catch (err: unknown) { // Type the error as unknown
-      // Check if err is an instance of Error to access message safely
-      const errorMessage = err instanceof Error ? err.message : "Failed to create account. Please try again.";
-      setError(errorMessage)
-      setIsLoading(false)
-    }
-  }
 
   const handleGoogleSignUp = async () => {
     setIsLoading(true)
@@ -60,7 +39,7 @@ export default function SignupPage() {
 
     try {
       await signInWithGoogle()
-      router.push("/welcome")
+      router.push("/dashboard") 
     } catch (err: unknown) { // Type the error as unknown
       // Check if err is an instance of Error to access message safely
       const errorMessage = err instanceof Error ? err.message : "Failed to sign up with Google.";
@@ -77,7 +56,7 @@ export default function SignupPage() {
             <SMLogo className="h-15 w-15 mx-auto" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-          <CardDescription className="text-center">Enter your information to create your account</CardDescription>
+          <CardDescription className="text-center">Sign up using your Google account</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -86,72 +65,6 @@ export default function SignupPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="name" 
-                  placeholder="John Doe" 
-                  required 
-                  className="pl-9" 
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="john@example.com" 
-                  required 
-                  className="pl-9"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  required
-                  className="pr-9"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
-                </Button>
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
-            </Button>
-          </form>
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
           <Button 
             variant="outline" 
             type="button" 
@@ -165,7 +78,7 @@ export default function SignupPage() {
               <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
               <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
             </svg>
-            Sign up with Google
+            {isLoading ? "Signing up..." : "Sign up with Google"}
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
