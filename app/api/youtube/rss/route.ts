@@ -93,14 +93,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     
     try {
       feed = await parser.parseURL(rssUrl);
-    } catch (parseError: any) {
-      console.error(`Error parsing RSS feed: ${parseError.message}`);
+    } catch (parseError: unknown) {
+      console.error(`Error parsing RSS feed: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
       
       let errorMessage = 'Failed to fetch or parse the RSS feed.';
-      if (parseError.message?.includes('Invalid XML')) {
-        errorMessage = 'The RSS URL does not point to a valid XML feed.';
-      } else if (parseError.code === 'ENOTFOUND' || parseError.message?.includes('fetch')) {
-        errorMessage = 'Could not reach the RSS URL. Please verify it is correct.';
+      if (parseError instanceof Error) {
+        if (parseError.message?.includes('Invalid XML')) {
+          errorMessage = 'The RSS URL does not point to a valid XML feed.';
+        } else if ('code' in parseError && parseError.code === 'ENOTFOUND' || 
+                  parseError.message?.includes('fetch')) {
+          errorMessage = 'Could not reach the RSS URL. Please verify it is correct.';
+        }
       }
       
       return NextResponse.json({ error: errorMessage }, { status: 500 });
@@ -127,15 +130,29 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in YouTube RSS API route:', error);
-    const errorMessage = error.code === 'permission-denied'
+    
+    // Define error properties with type safety
+    let errorCode = 'unknown';
+    let statusCode = 500;
+    
+    if (error instanceof Error && 'code' in error) {
+      const firebaseError = error as Error & { code?: string };
+      errorCode = firebaseError.code || 'unknown';
+      
+      if (errorCode === 'permission-denied') {
+        statusCode = 403;
+      }
+    }
+    
+    const errorMessage = errorCode === 'permission-denied'
       ? 'Firebase permission denied. Check if Firebase Admin SDK is properly configured.'
       : 'An internal server error occurred';
     
     return NextResponse.json(
-      { error: errorMessage, code: error.code || 'unknown' },
-      { status: error.code === 'permission-denied' ? 403 : 500 }
+      { error: errorMessage, code: errorCode },
+      { status: statusCode }
     );
   }
 }

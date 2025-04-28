@@ -103,9 +103,9 @@ export default function YoutubePage() {
           } else {
             setError("User document not found in Firestore");
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Failed to fetch YouTube RSS feed:", err);
-          setError(err.message || "An unknown error occurred while fetching the feed.");
+          setError(err instanceof Error ? err.message : "An unknown error occurred while fetching the feed.");
           setFeedItems([]);
         } finally {
           setIsLoading(false);
@@ -172,7 +172,7 @@ export default function YoutubePage() {
       return (
         <div className="text-center py-6">
           <p className="text-muted-foreground mb-4">
-            You haven't configured your YouTube RSS feed URL yet.
+            You haven&apos;t configured your YouTube RSS feed URL yet.
           </p>
           <Link href="/dashboard/settings?tab=connections">
             <Button>Configure YouTube RSS Feed</Button>
@@ -204,7 +204,7 @@ export default function YoutubePage() {
         <TableBody>
           {feedItems.map((item) => (
             <TableRow key={item.guid || item.link} className="group hover:bg-muted/50">
-              <TableCell className="font-medium">{item.title || 'No Title'}</TableCell>
+              <TableCell className="font-medium">{item.title || "No Title"}</TableCell>
               <TableCell className="text-right text-muted-foreground">
                 {formatDate(item.pubDate || item.isoDate)}
               </TableCell>
