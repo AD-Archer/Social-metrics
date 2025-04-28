@@ -25,8 +25,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 
-// Sample channel ID for example purposes
-const SAMPLE_CHANNEL_ID = "UC_x5XG1OV2P6uZZ5FSM9Ttw" // Google Developers channel ID
+// Sample channel ID for example purposes - Updated to user-provided ID
+const SAMPLE_CHANNEL_ID = "UCq6VFHwMzcMXbuKyG7SQYIg" // User-provided channel ID
 
 interface YouTubeRssHelpProps {
   currentUrl?: string;

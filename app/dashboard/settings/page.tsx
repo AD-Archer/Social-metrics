@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAccounts } from "@/context/account-context";
 import { YouTubeRssHelp } from "@/components/youtube-rss-help";
+import { cn } from "@/lib/utils"; // Import cn utility
 
 // Define platform type to avoid using 'any'
 type SocialPlatform = 'youtube'; // Simplified for current scope
@@ -694,13 +695,15 @@ export default function SettingsPage() {
                     <Youtube className="h-5 w-5 text-red-600" />
                     <h3 className="text-lg font-medium">YouTube Integration</h3>
                   </div>
+                  {/* Button to toggle YouTube RSS Help visibility */}
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => setShowHelpComponent(!showHelpComponent)}
+                    onClick={() => setShowHelpComponent(!showHelpComponent)} // Toggle state on click
                     className="flex items-center gap-1"
                   >
                     <HelpCircle className="h-4 w-4" />
+                    {/* Dynamically change button text */}
                     <span>{showHelpComponent ? "Hide Help" : "Show Help"}</span>
                   </Button>
                 </div>
@@ -792,19 +795,20 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                   
-                  {/* Current URL display */}
-                  {settings.connections?.youtubeRssUrl && !rssUrlEmpty && (
-                    <p className="text-xs text-muted-foreground mb-4">
-                      <strong>Current URL:</strong> {settings.connections.youtubeRssUrl}
-                    </p>
-                  )}
-                  
-                  {/* Help component */}
-                  {(showHelpComponent || rssUrlEmpty || (settings.connections?.youtubeRssUrl && settings.connections.youtubeRssUrl.includes('@'))) && (
-                    <div className="mt-4">
+                  {/* Help component Wrapper with Transition */}
+                  <div 
+                    className={cn(
+                      "overflow-hidden transition-all duration-500 ease-in-out",
+                      (showHelpComponent || rssUrlEmpty || (settings.connections?.youtubeRssUrl && settings.connections.youtubeRssUrl.includes('@'))) 
+                        ? "max-h-[1000px] opacity-100 mt-4" // Adjust max-h as needed, ensure it's large enough
+                        : "max-h-0 opacity-0"
+                    )}
+                  >
+                    {/* Render help component only when it should be visible or transitioning out */}
+                    {(showHelpComponent || rssUrlEmpty || (settings.connections?.youtubeRssUrl && settings.connections.youtubeRssUrl.includes('@'))) && (
                       <YouTubeRssHelp currentUrl={settings.connections?.youtubeRssUrl} />
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
