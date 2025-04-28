@@ -1,8 +1,7 @@
 /**
  * Dashboard main page displaying YouTube RSS feed as the primary content.
  * Fetches recent YouTube videos from the user's configured RSS feed and displays them
- * on the main dashboard. Uses the RSS feed API with cookie authentication to ensure
- * proper authorization when fetching user data.
+ * on the main dashboard. Uses the RSS feed API with the user's RSS URL.
  */
 "use client"
 
@@ -64,10 +63,10 @@ export default function DashboardPage() {
             if (rssUrl) {
               setRssConfigured(true)
               
-              // If RSS URL is configured, fetch feed from API
-              // Using credentials: 'include' to send cookies
-              const response = await fetch(`/api/youtube/rss?userId=${user.uid}`, {
-                credentials: 'include',
+              // If RSS URL is configured, fetch feed from API using the rssUrl
+              const encodedRssUrl = encodeURIComponent(rssUrl);
+              const response = await fetch(`/api/youtube/rss?rssUrl=${encodedRssUrl}`, {
+                // credentials: 'include', // Credentials might not be needed
                 cache: 'no-store',
                 headers: {
                   'Content-Type': 'application/json',

@@ -58,9 +58,11 @@ export default function YoutubePage() {
             if (rssUrl) {
               setRssConfigured(true);
               
-              // Fetch from the API with credentials
-              const response = await fetch(`/api/youtube/rss?userId=${user.uid}`, {
-                credentials: 'include',
+              // Fetch from the API using the retrieved rssUrl
+              // Encode the URL to handle special characters safely
+              const encodedRssUrl = encodeURIComponent(rssUrl);
+              const response = await fetch(`/api/youtube/rss?rssUrl=${encodedRssUrl}`, {
+                // credentials: 'include', // Credentials might not be needed if not using cookies/sessions for this specific route
                 cache: 'no-store',
                 headers: {
                   'Content-Type': 'application/json',

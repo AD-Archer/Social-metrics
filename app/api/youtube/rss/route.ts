@@ -1,12 +1,9 @@
 /**
- * API route handler for fetching and parsing a user's YouTube RSS feed.
- * Uses Firebase Admin SDK to securely access the user's RSS URL from Firestore,
- * then fetches and parses the feed content. This approach bypasses client-side
- * authentication limitations in server components.
+ * API route handler for fetching and parsing a YouTube RSS feed.
+ * Expects the RSS feed URL as a query parameter.
+ * It fetches the feed content using the provided URL and parses it.
  */
-
 import { NextResponse, type NextRequest } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
 import Parser from 'rss-parser';
 
 // Force dynamic rendering and prevent caching
@@ -37,60 +34,28 @@ interface ParsedFeed {
  * Handles GET requests to fetch and parse YouTube RSS feeds
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  // Get userId from query params
+  // Get rssUrl from query params
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
+  const rssUrl = searchParams.get('rssUrl'); // Changed from userId to rssUrl
 
-  if (!userId) {
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  // Validate that rssUrl is provided
+  if (!rssUrl) {
+    return NextResponse.json({ error: 'RSS URL is required' }, { status: 400 });
   }
 
   try {
-    // Use Firebase Admin SDK to access Firestore with admin privileges
-    // This bypasses the permission issues with client-side auth in API routes
-    const userDocRef = adminDb.collection('users').doc(userId);
-    const userDoc = await userDocRef.get();
-    
-    if (!userDoc.exists) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const userData = userDoc.data();
-    const rssUrl = userData?.connections?.youtubeRssUrl;
-
-    if (!rssUrl) {
-      return NextResponse.json(
-        { items: [] },
-        { status: 200 }
-      );
-    }
-
-    // Validate RSS URL format
-    if (!rssUrl.includes('youtube.com') || 
-        (!rssUrl.includes('feeds/videos.xml') && rssUrl.includes('@'))) {
-      
-      // Handle username format instead of proper RSS URL
-      let channelUsername = '';
-      
-      if (rssUrl.includes('@')) {
-        channelUsername = rssUrl.split('@')[1].split('/')[0];
-        
-        return NextResponse.json(
-          { 
-            error: 'Invalid RSS feed URL format. For channel usernames, you need the full RSS URL.',
-            helpText: `Try using: https://www.youtube.com/feeds/videos.xml?channel_id=CHANNEL_ID or find your channel ID in YouTube Studio settings.`,
-            enteredUrl: rssUrl,
-            extractedUsername: channelUsername
-          }, 
-          { status: 400 }
-        );
-      }
+    // Validate RSS URL format (basic check)
+    if (!rssUrl.includes('youtube.com/feeds/videos.xml')) {
+        // More specific validation might be needed depending on expected URL formats
+        console.warn(`Potentially invalid YouTube RSS URL format received: ${rssUrl}`);
+        // Decide if you want to return an error or attempt to parse anyway
+        // Example: return NextResponse.json({ error: 'Invalid YouTube RSS URL format' }, { status: 400 });
     }
 
     // Fetch and parse the RSS feed
     const parser = new Parser<ParsedFeed>();
     let feed: ParsedFeed;
-    
+
     try {
       feed = await parser.parseURL(rssUrl);
     } catch (parseError: unknown) {
@@ -131,28 +96,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
   } catch (error: unknown) {
+    // Updated error handling as Firestore errors are no longer expected here
     console.error('Error in YouTube RSS API route:', error);
-    
-    // Define error properties with type safety
-    let errorCode = 'unknown';
-    let statusCode = 500;
-    
-    if (error instanceof Error && 'code' in error) {
-      const firebaseError = error as Error & { code?: string };
-      errorCode = firebaseError.code || 'unknown';
-      
-      if (errorCode === 'permission-denied') {
-        statusCode = 403;
-      }
-    }
-    
-    const errorMessage = errorCode === 'permission-denied'
-      ? 'Firebase permission denied. Check if Firebase Admin SDK is properly configured.'
-      : 'An internal server error occurred';
-    
     return NextResponse.json(
-      { error: errorMessage, code: errorCode },
-      { status: statusCode }
+      { error: 'An internal server error occurred while processing the RSS feed.' },
+      { status: 500 }
     );
   }
 }
