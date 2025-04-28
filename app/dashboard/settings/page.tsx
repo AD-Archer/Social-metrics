@@ -342,10 +342,11 @@ export default function SettingsPage() {
         return;
       }
     } catch (error) {
+      console.error('Settings: Invalid YouTube RSS URL format', error);
       toast({
-        title: "Invalid URL",
-        description: "Please enter a valid URL",
-        variant: "destructive"
+        title: 'Invalid URL',
+        description: 'Please enter a valid URL',
+        variant: 'destructive'
       });
       setShowHelpComponent(true);
       return;
@@ -371,11 +372,10 @@ export default function SettingsPage() {
 
       toast({
         title: "YouTube RSS URL Saved",
-        description: "Your YouTube RSS feed URL has been updated.",
-        variant: "success"
+        description: "Your YouTube RSS feed URL has been updated."
       });
-    } catch (error) {
-      console.error("Settings Save Error: Error saving YouTube RSS URL:", error);
+    } catch (saveError) {
+      console.error("Settings Save Error: Error saving YouTube RSS URL:", saveError);
       toast({
         title: "Error",
         description: "Failed to save YouTube RSS URL. Check console for details.",

@@ -9,7 +9,6 @@ import {
   AlertCircle,
   AlertTriangle,
   Check,
-  ChevronDown,
   Copy,
   ExternalLink,
   Info,
@@ -103,7 +102,7 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
 
   return (
     <div className="space-y-4">
-      <Alert variant="info" className="bg-blue-50 dark:bg-blue-950/30">
+      <Alert className="bg-blue-50 dark:bg-blue-950/30">
         <Info className="h-4 w-4" />
         <AlertTitle>YouTube RSS Feed Configuration</AlertTitle>
         <AlertDescription>
@@ -183,10 +182,10 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
                 <h4 className="font-medium">Method 1: From YouTube Studio</h4>
                 <ol className="list-decimal list-inside space-y-1 pl-2">
                   <li>Log in to <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">YouTube Studio</a></li>
-                  <li>Click on "Settings" (gear icon) in the bottom-left corner</li>
-                  <li>Select "Channel" from the left sidebar</li>
-                  <li>Click on "Advanced settings"</li>
-                  <li>Your Channel ID appears under "Channel ID"</li>
+                  <li>Click on &quot;Settings&quot; (gear icon) in the bottom-left corner</li>
+                  <li>Select &quot;Channel&quot; from the left sidebar</li>
+                  <li>Click on &quot;Advanced settings&quot;</li>
+                  <li>Your Channel ID appears under &quot;Channel ID&quot;</li>
                 </ol>
               </div>
               
@@ -194,9 +193,9 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
                 <h4 className="font-medium">Method 2: From your channel page source</h4>
                 <ol className="list-decimal list-inside space-y-1 pl-2">
                   <li>Go to your YouTube channel page</li>
-                  <li>View the page source (right-click > "View Page Source")</li>
-                  <li>Search for "channelId"</li>
-                  <li>The ID will appear as: <code className="bg-muted px-1">channelId":"UC..."</code></li>
+                  <li>View the page source (right-click → &quot;View Page Source&quot;)</li>
+                  <li>Search for &quot;channelId&quot;</li>
+                  <li>The ID will appear as: <code className="bg-muted px-1">channelId&quot;:&quot;UC...&quot;</code></li>
                 </ol>
               </div>
               
@@ -205,14 +204,14 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
                 <ol className="list-decimal list-inside space-y-1 pl-2">
                   <li>Go to any of your uploaded videos</li>
                   <li>Click on your channel name under the video</li>
-                  <li>Look at the URL in your browser's address bar</li>
-                  <li>If it shows <code className="bg-muted px-1">youtube.com/channel/UC...</code>, the part after "/channel/" is your Channel ID</li>
+                  <li>Look at the URL in your browser&apos;s address bar</li>
+                  <li>If it shows <code className="bg-muted px-1">youtube.com/channel/UC...</code>, the part after &quot;/channel/&quot; is your Channel ID</li>
                 </ol>
               </div>
               
               <div className="mt-4">
                 <Badge variant="outline" className="mr-2">Note</Badge>
-                <span>Your Channel ID always starts with "UC" followed by a string of letters and numbers.</span>
+                <span>Your Channel ID always starts with &quot;UC&quot; followed by a string of letters and numbers.</span>
               </div>
               
               <div className="pt-2 flex justify-end">
@@ -272,7 +271,7 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
               <div className="space-y-2">
                 <h4 className="font-medium flex items-center gap-1">
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  Missing the "channel_id=" parameter
+                  Missing the &quot;channel_id=&quot; parameter
                 </h4>
                 <div className="pl-6 space-y-1">
                   <p><strong>Incorrect:</strong></p>
