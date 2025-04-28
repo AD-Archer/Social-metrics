@@ -35,3 +35,4 @@ next-env.d.ts
 
 # Macos 
 .DS_Store
+copilot-instructions.md
