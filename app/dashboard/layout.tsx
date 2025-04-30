@@ -43,6 +43,13 @@ export default function DashboardLayout({
   const [userName, setUserName] = useState("User")
   const isMobile = useIsMobile()
 
+  // Automatically open mobile nav on small screens
+  useEffect(() => {
+    if (!isMobile && isMobileNavOpen) {
+      setIsMobileNavOpen(false)
+    }
+  }, [isMobile, isMobileNavOpen])
+
   // Set user display name and photo URL when user data is available
   useEffect(() => {
     if (user) {
