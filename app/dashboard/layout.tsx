@@ -1,16 +1,17 @@
 'use client'
 /**
- * Note to self remember to acctually implement the logout functionality we are just gonna have a redirect
- * for now
+ * Dashboard layout component that provides the main navigation structure.
+ * Includes responsive sidebar for navigation, header with user controls,
+ * and handles protected routes with authentication.
+ * Mobile-optimized with collapsible sidebar and responsive design patterns.
  */
-
 
 import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, Bell } from "lucide-react"
+import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, Bell, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,11 +22,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose } from "@/components/ui/toast"
 import { useToast } from "@/hooks/use-toast"
 import ProtectedRoute from "@/components/protected-route"
 import { useAuth } from "@/context/auth-context"
+import { useIsMobile } from '@/components/ui/use-mobile'
 
 
 export default function DashboardLayout({
@@ -39,6 +41,7 @@ export default function DashboardLayout({
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const { toasts, toast } = useToast()
   const [userName, setUserName] = useState("User")
+  const isMobile = useIsMobile()
 
   // Set user display name and photo URL when user data is available
   useEffect(() => {
@@ -56,7 +59,6 @@ export default function DashboardLayout({
       })
       router.push("/")
     } catch (error: unknown) {
-      // Log the error or handle it more specifically if needed
       console.error("Logout failed:", error);
       toast({
         title: "Error logging out",
@@ -91,24 +93,32 @@ export default function DashboardLayout({
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72">
-                <div className="flex items-center gap-2 font-bold mb-8">
-                  <DashboardHeaderSMLogo className="h-7 w-7" />
-                  <span>SocialMetrics</span>
+              <SheetContent side="left" className="w-72 p-0">
+                <div className="flex h-16 items-center justify-between px-4 border-b">
+                  <div className="flex items-center gap-2 font-bold">
+                    <DashboardHeaderSMLogo className="h-7 w-7" />
+                    <span>SocialMetrics</span>
+                  </div>
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Close</span>
+                    </Button>
+                  </SheetClose>
                 </div>
-                <nav className="grid gap-2">
+                <nav className="grid gap-1 p-4">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
                       onClick={() => setIsMobileNavOpen(false)}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                         pathname === item.href
                           ? "bg-muted font-medium"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-5 w-5" />
                       {item.name}
                     </Link>
                   ))}
@@ -150,28 +160,28 @@ export default function DashboardLayout({
               </DropdownMenuContent>
             </DropdownMenu>
           </header>
-          <div className="flex flex-1 justify-center">
+          <div className="flex flex-1">
             <aside className="hidden w-64 shrink-0 border-r md:block glass-card bg-sidebar-background/90 backdrop-blur-xl shadow-2xl border-l-4 border-l-primary/40">
               <div className="flex h-full flex-col gap-2 p-4">
-                <nav className="grid gap-1">
+                <nav className="grid gap-1 pt-2">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                         pathname === item.href
                           ? "bg-muted font-medium"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-5 w-5" />
                       {item.name}
                     </Link>
                   ))}
                 </nav>
               </div>
             </aside>
-            <main className="flex-1 max-w-5xl mx-auto p-4 md:p-8 flex flex-col items-center justify-start">{children}</main>
+            <main className="flex-1 max-w-full md:max-w-5xl mx-auto p-3 md:p-8 flex flex-col w-full">{children}</main>
           </div>
 
           {/* Toast notifications */}

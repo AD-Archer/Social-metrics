@@ -4,7 +4,7 @@
  * processes and displays recent videos with publication dates and links.
  * Includes placeholder analytics data (views, likes, comments) for presentation.
  * Allows viewing video descriptions in a dialog.
- * Features interactive charts for visualizing video statistics (views, likes, comments) with selectable chart types.
+ * Features interactive charts for visualizing video statistics with responsive design.
  */
 "use client";
 
@@ -78,6 +78,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useIsMobile } from '@/components/ui/use-mobile';
 
 interface SelectedVideoType {
   title?: string;
@@ -102,6 +103,7 @@ export default function YoutubePage() {
   const [user, loadingAuth] = useAuthState(auth);
   const { accounts } = useAccounts();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const {
     feedItems,
@@ -171,7 +173,9 @@ export default function YoutubePage() {
 
   // Common chart props to avoid repetition
   const commonChartProps = {
-    margin: { top: 5, right: 20, left: 10, bottom: 5 },
+    margin: isMobile 
+      ? { top: 5, right: 5, left: 0, bottom: 5 }
+      : { top: 5, right: 20, left: 10, bottom: 5 },
   };
 
   const commonTooltipProps = {
@@ -180,6 +184,8 @@ export default function YoutubePage() {
       backgroundColor: 'hsl(var(--background))',
       borderColor: 'hsl(var(--border))',
       borderRadius: 'var(--radius)',
+      padding: '8px',
+      fontSize: isMobile ? '12px' : '14px',
     },
     formatter: (value: number, name: string) => [
       formatNumber(value),
@@ -190,14 +196,23 @@ export default function YoutubePage() {
   const commonYAxisProps = {
     tickLine: false,
     axisLine: false,
-    tickFormatter: (value: number) => formatNumber(value),
+    tickFormatter: (value: number) => isMobile ? formatCompactNumber(value) : formatNumber(value),
+    tick: { fontSize: isMobile ? 10 : 12 },
+    width: isMobile ? 35 : 60,
   };
 
   const commonXAxisProps = {
     dataKey: "name",
     tickLine: false,
     axisLine: false,
-    tick: false, // Hide labels on X-axis to avoid clutter
+    tick: false,
+  };
+
+  const formatCompactNumber = (num?: number): string => {
+    if (num === undefined || num === null) return 'N/A';
+    if (num < 1000) return num.toString();
+    if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+    return (num / 1000000).toFixed(1) + 'M';
   };
 
   const renderContent = () => {
@@ -310,10 +325,10 @@ export default function YoutubePage() {
                     Visualizing generated stats per video (oldest to newest).
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className={`flex ${isMobile ? 'flex-col w-full' : 'items-center'} gap-2`}>
                    {/* Chart Type Selector */}
                    <Select value={chartType} onValueChange={(value: 'bar' | 'line' | 'area') => setChartType(value)}>
-                    <SelectTrigger className="w-[120px]">
+                    <SelectTrigger className={isMobile ? "w-full" : "w-[120px]"}>
                       <SelectValue placeholder="Chart Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -324,11 +339,11 @@ export default function YoutubePage() {
                   </Select>
                   {/* Keep Tabs only for Bar Chart */}
                   {chartType === 'bar' && (
-                    <Tabs value={selectedMetric} onValueChange={(value) => setSelectedMetric(value as 'views' | 'likes' | 'comments')} className="w-auto">
-                      <TabsList>
-                        <TabsTrigger value="views">Views</TabsTrigger>
-                        <TabsTrigger value="likes">Likes</TabsTrigger>
-                        <TabsTrigger value="comments">Comments</TabsTrigger>
+                    <Tabs value={selectedMetric} onValueChange={(value) => setSelectedMetric(value as 'views' | 'likes' | 'comments')} className={isMobile ? "w-full" : "w-auto"}>
+                      <TabsList className={isMobile ? "w-full grid grid-cols-3" : ""}>
+                        <TabsTrigger value="views" className={isMobile ? "flex-1" : ""}>Views</TabsTrigger>
+                        <TabsTrigger value="likes" className={isMobile ? "flex-1" : ""}>Likes</TabsTrigger>
+                        <TabsTrigger value="comments" className={isMobile ? "flex-1" : ""}>Comments</TabsTrigger>
                       </TabsList>
                     </Tabs>
                   )}
@@ -406,59 +421,61 @@ export default function YoutubePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Video Title</TableHead>
-                  <TableHead className="text-right">Published</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead className="text-right">Likes</TableHead>
-                  <TableHead className="text-right">Comments</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {feedItems.map((item) => (
-                  <TableRow key={item.guid || item.link} className="group hover:bg-muted/50">
-                    <TableCell className="font-medium max-w-xs truncate" title={item.title}>{item.title || "No Title"}</TableCell>
-                    <TableCell className="text-right text-muted-foreground whitespace-nowrap">
-                      {formatDate(item.pubDate || item.isoDate)}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.views)}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.likes)}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.comments)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end">
-                        {item.contentSnippet && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleOpenDialog(item)}
-                            title="View Description"
-                            className="gap-1"
-                          >
-                            <Info className="h-4 w-4" />
-                            <span>View</span>
-                          </Button>
-                        )}
-                        {item.link && (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Watch on YouTube"
-                            className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors h-7 w-7 ml-1" // Added ml-1 for spacing
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">Watch video</span>
-                          </a>
-                        )}
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[180px]">Video Title</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Published</TableHead>
+                    <TableHead className="text-right">Views</TableHead>
+                    <TableHead className="text-right">Likes</TableHead>
+                    <TableHead className="text-right">Comments</TableHead>
+                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {feedItems.map((item) => (
+                    <TableRow key={item.guid || item.link} className="group hover:bg-muted/50">
+                      <TableCell className="font-medium max-w-[180px] truncate" title={item.title}>{item.title || "No Title"}</TableCell>
+                      <TableCell className="text-right text-muted-foreground whitespace-nowrap">
+                        {formatDate(item.pubDate || item.isoDate)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatNumber(item.views)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatNumber(item.likes)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatNumber(item.comments)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end">
+                          {item.contentSnippet && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleOpenDialog(item)}
+                              title="View Description"
+                              className={`gap-1 ${isMobile ? 'p-2' : ''}`}
+                            >
+                              <Info className="h-4 w-4" />
+                              {!isMobile && <span>View</span>}
+                            </Button>
+                          )}
+                          {item.link && (
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Watch on YouTube"
+                              className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors h-7 w-7 ml-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span className="sr-only">Watch video</span>
+                            </a>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
