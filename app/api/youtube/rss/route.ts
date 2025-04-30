@@ -1,7 +1,8 @@
 /**
  * API route handler for fetching and parsing a YouTube RSS feed.
  * Expects the RSS feed URL as a query parameter.
- * It fetches the feed content using the provided URL and parses it.
+ * It fetches the feed content using the provided URL and parses it,
+ * ensuring the video description is captured.
  */
 import { NextResponse, type NextRequest } from 'next/server';
 import Parser from 'rss-parser';
@@ -19,6 +20,7 @@ interface RssFeedItem {
   guid?: string;
   id?: string;
   contentSnippet?: string;
+  content?: string; // Add content field as potential source for description
 }
 
 // Type for parsed feed structure
@@ -81,7 +83,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       pubDate: item.pubDate,
       isoDate: item.isoDate,
       guid: item.guid || item.id || item.link,
-      contentSnippet: item.contentSnippet 
+      // Use contentSnippet first, fallback to content for description
+      contentSnippet: item.contentSnippet || item.content
     }));
 
     // Set cache control headers to prevent stale data

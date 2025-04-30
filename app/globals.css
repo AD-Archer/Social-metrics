@@ -2,100 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-/* Glassmorphism card utility */
-.glass-card {
-  @apply bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 dark:border-gray-700/40 transition-all;
-}
-
-/* Fade-in animation */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: none; }
-}
-.animate-fade-in {
-  animation: fade-in 0.8s cubic-bezier(0.4,0,0.2,1) both;
-}
-
-/* Count animation (for numbers) */
-@keyframes count {
-  from { opacity: 0.5; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-.animate-count {
-  animation: count 0.6s cubic-bezier(0.4,0,0.2,1) both;
-}
-
 @layer base {
   :root {
-    --background: 340 22% 97%; /* #f7f4f4 (White Smoke) */
-    --foreground: 330 38% 18%; /* #552834 (Wine) */
-    --card: 340 22% 97%;
-    --card-foreground: 330 38% 18%;
-    --popover: 340 22% 97%;
-    --popover-foreground: 330 38% 18%;
-    --primary: 330 38% 18%; /* Wine */
-    --primary-foreground: 340 22% 97%; /* White Smoke */
-    --secondary: 340 22% 90%;
-    --secondary-foreground: 330 38% 18%;
-    --muted: 340 22% 92%;
-    --muted-foreground: 330 38% 40%;
-    --accent: 330 38% 18%; /* Wine */
-    --accent-foreground: 340 22% 97%; /* White Smoke */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 340 22% 90%;
-    --input: 340 22% 90%;
-    --ring: 330 38% 18%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
     --radius: 0.5rem;
-    /* Sidebar colors */
-    --sidebar-background: 340 22% 97%;
-    --sidebar-foreground: 330 38% 18%;
-    --sidebar-primary: 330 38% 18%;
-    --sidebar-primary-foreground: 340 22% 97%;
-    --sidebar-accent: 340 22% 92%;
-    --sidebar-accent-foreground: 330 38% 18%;
-    --sidebar-border: 330 38% 18%;
-    --sidebar-ring: 330 38% 18%;
+
+    /* Chart Colors */
+    --chart-1: 222.2 47.4% 11.2%; /* ~ Primary */
+    --chart-2: 160 60% 45%;      /* Teal */
+    --chart-3: 340 80% 60%;      /* Pink */
+    --chart-4: 40 90% 60%;       /* Orange */
+    --chart-5: 280 70% 65%;      /* Purple */
   }
+
   .dark {
-    --background: 330 38% 18%; /* Wine */
-    --foreground: 340 22% 97%; /* White Smoke */
-    --card: 330 38% 18%;
-    --card-foreground: 340 22% 97%;
-    --popover: 330 38% 18%;
-    --popover-foreground: 340 22% 97%;
-    --primary: 340 22% 97%;
-    --primary-foreground: 330 38% 18%;
-    --secondary: 330 38% 25%;
-    --secondary-foreground: 340 22% 97%;
-    --muted: 330 38% 25%;
-    --muted-foreground: 340 22% 80%;
-    --accent: 340 22% 97%;
-    --accent-foreground: 330 38% 18%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 330 38% 25%;
-    --input: 330 38% 25%;
-    --ring: 340 22% 97%;
-    --radius: 0.5rem;
-    --sidebar-background: 330 38% 18%;
-    --sidebar-foreground: 340 22% 97%;
-    --sidebar-primary: 340 22% 97%;
-    --sidebar-primary-foreground: 330 38% 18%;
-    --sidebar-accent: 330 38% 25%;
-    --sidebar-accent-foreground: 340 22% 97%;
-    --sidebar-border: 340 22% 97%;
-    --sidebar-ring: 340 22% 97%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Chart Colors (Dark Theme) - Adjust as needed */
+    --chart-1: 210 40% 98%;      /* ~ Primary */
+    --chart-2: 160 70% 55%;      /* Teal */
+    --chart-3: 340 85% 70%;      /* Pink */
+    --chart-4: 40 95% 70%;       /* Orange */
+    --chart-5: 280 75% 75%;      /* Purple */
   }
 }
 
