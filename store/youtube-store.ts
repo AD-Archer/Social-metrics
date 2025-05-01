@@ -26,7 +26,6 @@ export interface RssFeedItemWithStats extends RssFeedItem {
     views?: number;
     likes?: number;
     comments?: number;
-    aiAnalysis?: VideoAIAnalysis;
 }
 
 interface TrendComparisonData {
@@ -48,7 +47,7 @@ interface ConversionRate {
     change: number;
 }
 
-export interface TrendData {
+interface TrendData {
     monthly: {
         views: TrendComparisonData[];
         likes: TrendComparisonData[];
@@ -63,21 +62,12 @@ export interface TrendData {
     lastUpdated: number;
 }
 
-interface VideoAIAnalysis {
-    summary?: string;
-    keywords?: string[] | string;
-    targetAudience?: string;
-    performanceBoostIdeas?: string[] | string;
-    contentSuggestions?: string[] | string;
-    isLoading?: boolean;
-    error?: string;
-    raw_analysis?: string;
-}
-
+// Helper function to generate placeholder statistics
 const generatePlaceholderStat = (base: number, variance: number): number => {
     return Math.floor(base + (Math.random() - 0.5) * variance * 2);
 };
 
+// Helper function to generate monthly comparison data
 const generateMonthlyComparisonData = (metric: string, baseValue: number): TrendComparisonData[] => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
@@ -104,6 +94,7 @@ const generateMonthlyComparisonData = (metric: string, baseValue: number): Trend
     });
 };
 
+// Helper function to generate yearly comparison data
 const generateYearlyComparisonData = (metric: string, baseValue: number): YearlyComparisonDataPoint[] => {
     const currentYear = new Date().getFullYear();
     const years = [currentYear - 2, currentYear - 1, currentYear];
@@ -134,7 +125,8 @@ const generateYearlyComparisonData = (metric: string, baseValue: number): Yearly
     return yearData;
 };
 
-export interface YoutubeState {
+// Define the state structure and actions
+interface YoutubeState {
     feedItems: RssFeedItemWithStats[];
     trendData: TrendData | null;
     isLoading: boolean;
@@ -230,6 +222,7 @@ export const useYoutubeStore = create<YoutubeState>()(
 
                     set({ feedItems: sortedItemsWithStats, isLoading: false, error: null });
                     
+                    // Generate trend data after feed is loaded
                     get().generateTrendData(sortedItemsWithStats);
 
                 } catch (err: unknown) {
@@ -244,7 +237,9 @@ export const useYoutubeStore = create<YoutubeState>()(
                 }
             },
 
+            // Action to generate trend data based on feed items
             generateTrendData: (feedItems: RssFeedItemWithStats[]) => {
+                // Calculate total stats to use as base values
                 const totalStats = feedItems.reduce(
                     (acc: { views: number; likes: number; comments: number }, item) => {
                         acc.views += item.views || 0;
@@ -255,27 +250,31 @@ export const useYoutubeStore = create<YoutubeState>()(
                     { views: 0, likes: 0, comments: 0 }
                 );
                 
+                // Base values for trends, adjusted based on actual data
                 const viewsBase = Math.max(totalStats.views / (feedItems.length || 1), 1000);
                 const likesBase = Math.max(totalStats.likes / (feedItems.length || 1), 50);
                 const commentsBase = Math.max(totalStats.comments / (feedItems.length || 1), 10);
                 
+                // Generate monthly comparison data
                 const monthlyData = {
                     views: generateMonthlyComparisonData('views', viewsBase),
                     likes: generateMonthlyComparisonData('likes', likesBase),
                     comments: generateMonthlyComparisonData('comments', commentsBase),
                 };
                 
+                // Generate yearly comparison data
                 const yearlyData = {
                     views: generateYearlyComparisonData('views', viewsBase),
                     likes: generateYearlyComparisonData('likes', likesBase),
                     comments: generateYearlyComparisonData('comments', commentsBase),
                 };
                 
+                // Generate conversion rate metrics
                 const conversionRates = [
                     {
                         name: "Likes to Views",
                         value: totalStats.views > 0 ? (totalStats.likes / totalStats.views) * 100 : 0,
-                        change: (Math.random() * 35) - 15,
+                        change: (Math.random() * 35) - 15, // Random change between -15% and +20%
                     },
                     {
                         name: "Comments to Views",
@@ -289,6 +288,7 @@ export const useYoutubeStore = create<YoutubeState>()(
                     }
                 ];
                 
+                // Create trend data object
                 const trendData: TrendData = {
                     monthly: monthlyData,
                     yearly: yearlyData,
@@ -299,143 +299,7 @@ export const useYoutubeStore = create<YoutubeState>()(
                 set({ trendData });
             },
 
-            analyzeVideoWithAI: async (videoId, showToast) => {
-                const { feedItems } = get();
-                
-                const videoIndex = feedItems.findIndex(item => 
-                    (item.guid && item.guid.includes(videoId)) || 
-                    (item.link && item.link.includes(videoId))
-                );
-                
-                if (videoIndex === -1) {
-                    showToast({
-                        title: "Analysis Error",
-                        description: "Video not found in your feed.",
-                        variant: "destructive",
-                    });
-                    return;
-                }
-                
-                const updatedItems = [...feedItems];
-                updatedItems[videoIndex] = {
-                    ...updatedItems[videoIndex],
-                    aiAnalysis: {
-                        ...updatedItems[videoIndex].aiAnalysis,
-                        isLoading: true,
-                        error: undefined,
-                        raw_analysis: undefined,
-                    }
-                };
-                
-                set({ feedItems: updatedItems });
-                
-                try {
-                    const { title, contentSnippet } = updatedItems[videoIndex];
-                    
-                    const response = await fetch('/api/youtube/ai', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            title,
-                            description: contentSnippet
-                        }),
-                    });
-                    
-                    const analysisData = await response.json();
-                    
-                    if (!response.ok) {
-                        throw new Error(analysisData.error || `Failed to analyze video (Status: ${response.status})`);
-                    }
-
-                    if (analysisData.error) {
-                         console.warn("AI Analysis reported an error:", analysisData.error);
-                         const finalUpdatedItems = [...get().feedItems];
-                         finalUpdatedItems[videoIndex] = {
-                             ...finalUpdatedItems[videoIndex],
-                             aiAnalysis: {
-                                 isLoading: false,
-                                 error: analysisData.error,
-                                 raw_analysis: analysisData.raw_analysis,
-                             }
-                         };
-                         set({ feedItems: finalUpdatedItems });
-                         showToast({
-                             title: "Analysis Partially Failed",
-                             description: analysisData.error,
-                             variant: "default",
-                         });
-                         return;
-                    }
-
-                    const finalUpdatedItems = [...get().feedItems];
-                    finalUpdatedItems[videoIndex] = {
-                        ...finalUpdatedItems[videoIndex],
-                        aiAnalysis: {
-                            summary: analysisData.summary,
-                            keywords: Array.isArray(analysisData.keywords)
-                                ? analysisData.keywords
-                                : typeof analysisData.keywords === 'string'
-                                    ? analysisData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean)
-                                    : [],
-                            targetAudience: analysisData.targetAudience,
-                            performanceBoostIdeas: analysisData.performanceBoostIdeas,
-                            contentSuggestions: analysisData.contentSuggestions,
-                            isLoading: false,
-                            error: undefined
-                        }
-                    };
-                    
-                    set({ feedItems: finalUpdatedItems });
-                    
-                    showToast({
-                        title: "Analysis Complete",
-                        description: "AI insights for your video are ready.",
-                    });
-                    
-                } catch (err) {
-                    console.error("AI analysis error:", err);
-                    
-                    const errorItems = [...get().feedItems];
-                    const errorMessage = err instanceof Error ? err.message : "Failed to analyze video";
-                    errorItems[videoIndex] = {
-                        ...errorItems[videoIndex],
-                        aiAnalysis: {
-                            ...errorItems[videoIndex].aiAnalysis,
-                            isLoading: false,
-                            error: errorMessage,
-                        }
-                    };
-                    
-                    set({ feedItems: errorItems });
-                    
-                    showToast({
-                        title: "Analysis Failed",
-                        description: errorMessage,
-                        variant: "destructive",
-                    });
-                }
-            },
-            
-            isAnalyzingVideo: (videoId) => {
-                const { feedItems } = get();
-                const video = feedItems.find(item => 
-                    (item.guid && item.guid.includes(videoId)) || 
-                    (item.link && item.link.includes(videoId))
-                );
-                return video?.aiAnalysis?.isLoading || false;
-            },
-            
-            getVideoAnalysis: (videoId) => {
-                const { feedItems } = get();
-                const video = feedItems.find(item => 
-                    (item.guid && item.guid.includes(videoId)) || 
-                    (item.link && item.link.includes(videoId))
-                );
-                return video?.aiAnalysis;
-            },
-
+            // Action to reset the store to its initial state
             resetState: () => set(initialState),
         }),
         {
