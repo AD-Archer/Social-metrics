@@ -12,7 +12,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, X } from "lucide-react"
+import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, X, Twitch } from "lucide-react"
 import Head from 'next/head'
 
 import { Button } from "@/components/ui/button"
@@ -80,6 +80,7 @@ export default function DashboardLayout({
   const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
     { name: "YouTube", href: "/dashboard/youtube", icon: Youtube },
+    { name: "Twitch", href: "/dashboard/twitch", icon: Twitch }, 
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ]
 

@@ -16,11 +16,12 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "SocialMetrics - Social Media Analytics Dashboard",
   description: "Track and analyze your social media performance across multiple platforms.",
-  keywords: ["Social Media", "Analytics", "Dashboard", "YouTube", "Instagram", "Marketing"],
+  keywords: ["Social Media", "Analytics", "Dashboard", "YouTube", "Instagram", "Marketing", "Twitch", "Twitter"],
+  authors: [{ name: "Antonio Archer", url: "https://antonioarcher.com" }],
   viewport: "width=device-width, initial-scale=1",
   openGraph: {
     title: "SocialMetrics - Unified Social Media Dashboard",
-    description: "View real-time analytics and insights across YouTube, Instagram, and more.",
+    description: "View real-time analytics and insights across YouTube, and Twitch.",
     url: "https://socialmetrics.adarcher.app",
     siteName: "SocialMetrics",
     type: "website",
