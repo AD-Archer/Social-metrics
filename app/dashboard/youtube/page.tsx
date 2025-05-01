@@ -41,15 +41,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -61,7 +52,6 @@ import {
 import {
   ExternalLink,
   AlertCircle,
-  Settings,
   ThumbsUp,
   MessageSquare,
   Info,
@@ -86,6 +76,10 @@ import {
 } from "@/components/ui/select";
 import { useIsMobile } from '@/components/ui/use-mobile';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { YoutubePageHeader } from "./components/YoutubePageHeader";
+import { YoutubeVideoDialog } from "./components/YoutubeVideoDialog";
 
 interface SelectedVideoType {
   title?: string;

@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { TrendData } from "@/store/youtube-store"; // Import the type
+import { TrendData, TrendComparisonData, ConversionRate } from "@/store/youtube-store"; // Import the type
+import { ReactNode } from 'react';
 import {
   TrendingUp, ArrowUpRight, ArrowDownRight, ArrowRight, Percent, ThumbsUp, MessageSquare
 } from "lucide-react";
@@ -52,7 +53,7 @@ export function YoutubeTrendsAnalysis({
 
   const monthlyComparisonData = trendData.monthly;
   const yearlyComparisonData = trendData.yearly;
-  const conversionRateData = trendData.conversion.map((item) => {
+  const conversionRateData = trendData.conversion.map((item: ConversionRate) => {
       const icon = item.name.includes("Likes") ?
         <ThumbsUp className="h-4 w-4" /> :
         <MessageSquare className="h-4 w-4" />;
@@ -139,7 +140,7 @@ export function YoutubeTrendsAnalysis({
             </div>
 
             <div className="grid gap-4 md:grid-cols-3 mt-4">
-              {monthlyComparisonData[selectedMetric].slice(0, 3).map((item, idx) => (
+              {monthlyComparisonData[selectedMetric].slice(0, 3).map((item: TrendComparisonData, idx: number) => (
                 <Card key={idx}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-center">
@@ -234,7 +235,7 @@ export function YoutubeTrendsAnalysis({
             <h3 className="text-lg font-medium mb-4">Conversion Rate Metrics</h3>
 
             <div className="grid gap-4 md:grid-cols-3">
-              {conversionRateData.map((item, idx) => (
+              {conversionRateData.map((item: ConversionRate & { icon: ReactNode }, idx: number) => (
                 <Card key={idx}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">

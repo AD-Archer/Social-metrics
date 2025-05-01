@@ -28,7 +28,7 @@ export interface RssFeedItemWithStats extends RssFeedItem {
     comments?: number;
 }
 
-interface TrendComparisonData {
+export interface TrendComparisonData {
     name: string;
     current: number;
     previous: number;
@@ -36,18 +36,18 @@ interface TrendComparisonData {
     changePercent: number;
 }
 
-interface YearlyComparisonDataPoint {
+export interface YearlyComparisonDataPoint {
     name: string;
     [year: string]: number | string;
 }
 
-interface ConversionRate {
+export interface ConversionRate {
     name: string;
     value: number;
     change: number;
 }
 
-interface TrendData {
+export interface TrendData {
     monthly: {
         views: TrendComparisonData[];
         likes: TrendComparisonData[];
@@ -60,6 +60,15 @@ interface TrendData {
     };
     conversion: ConversionRate[];
     lastUpdated: number;
+}
+
+// Define and export AI analysis result type
+export interface VideoAIAnalysis {
+    summary: string;
+    keywords: string[];
+    targetAudience: string;
+    performanceBoostIdeas: string[];
+    contentSuggestions: string[];
 }
 
 // Helper function to generate placeholder statistics
@@ -126,7 +135,7 @@ const generateYearlyComparisonData = (metric: string, baseValue: number): Yearly
 };
 
 // Define the state structure and actions
-interface YoutubeState {
+export interface YoutubeState {
     feedItems: RssFeedItemWithStats[];
     trendData: TrendData | null;
     isLoading: boolean;
@@ -138,6 +147,8 @@ interface YoutubeState {
     analyzeVideoWithAI: (videoId: string, showToast: typeof toast) => Promise<void>;
     isAnalyzingVideo: (videoId: string) => boolean;
     getVideoAnalysis: (videoId: string) => VideoAIAnalysis | undefined;
+    analysisInProgress: string[];
+    videoAnalysisMap: Record<string, VideoAIAnalysis>;
 }
 
 const initialState = {
@@ -152,6 +163,9 @@ export const useYoutubeStore = create<YoutubeState>()(
     persist(
         (set, get) => ({
             ...initialState,
+            // AI analysis state
+            analysisInProgress: [] as string[],
+            videoAnalysisMap: {} as Record<string, VideoAIAnalysis>,
 
             fetchFeed: async (user, showToast) => {
                 if (!user) {
@@ -297,6 +311,17 @@ export const useYoutubeStore = create<YoutubeState>()(
                 };
                 
                 set({ trendData });
+            },
+
+            // Stubbed action for AI video analysis; implement API integration as needed
+            analyzeVideoWithAI: async (videoId, showToast) => {
+                console.warn(`AI analysis not implemented for video ${videoId}`);
+            },
+            isAnalyzingVideo: (videoId: string) => {
+                return get().analysisInProgress.includes(videoId);
+            },
+            getVideoAnalysis: (videoId: string) => {
+                return get().videoAnalysisMap[videoId];
             },
 
             // Action to reset the store to its initial state
