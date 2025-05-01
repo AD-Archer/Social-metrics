@@ -1,14 +1,14 @@
 /**
  * @fileoverview Authentication context provider using Firebase Authentication.
- * Provides user state, loading status, and authentication functions (Sign-In, Link, Logout, Profile Update).
+ * Provides user state, loading status, and authentication functions (Sign-In, Link, Logout, Profile Update, Email Update).
  * Handles linking multiple OAuth providers (Google, Twitch) to a single user account.
- * Automatically redirects authenticated users from login/signup pages to the dashboard.
+ * Manages redirection based on authentication status and profile completeness (email presence).
  * This context wraps the application to make authentication state available globally.
  */
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"; // Import router and pathname hooks
+import { useRouter, usePathname } from "next/navigation";
 import {
   User,
   onAuthStateChanged,
@@ -16,13 +16,14 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
-  linkWithPopup, // Import linkWithPopup
+  linkWithPopup,
   updateProfile,
+  updateEmail, // Import updateEmail
   UserCredential,
-  AuthErrorCodes // Import AuthErrorCodes for specific error handling
+  AuthErrorCodes
 } from "firebase/auth"
 import { auth } from "@/lib/firebase"
-import { doc, setDoc, getDoc } from "firebase/firestore"
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore" // Import updateDoc
 import { db } from "@/lib/firebase"
 
 type AuthContextType = {
@@ -30,51 +31,80 @@ type AuthContextType = {
   loading: boolean
   signInWithGoogle: () => Promise<UserCredential>
   signInWithTwitch: () => Promise<UserCredential>
-  linkWithGoogle: () => Promise<UserCredential | null> // Add link function
-  linkWithTwitch: () => Promise<UserCredential | null> // Add link function
+  linkWithGoogle: () => Promise<UserCredential | null>
+  linkWithTwitch: () => Promise<UserCredential | null>
   logout: () => Promise<void>
   updateUserProfile: (displayName: string, photoURL?: string) => Promise<void>
+  updateUserEmail: (email: string) => Promise<void> // Add function to update email
   isTwitchLoginDisabled: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+// List of public paths accessible without authentication
+const PUBLIC_PATHS = ['/login', '/signup', '/landing'];
+// Path where users are sent to complete their profile (e.g., add email)
+const WELCOME_PATH = '/welcome';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const isTwitchLoginDisabled = false // Keep false
-  const router = useRouter(); // Initialize router
-  const pathname = usePathname(); // Get current path
+  const isTwitchLoginDisabled = false
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    console.log("AuthProvider useEffect triggered"); // Add log
+    console.log("AuthProvider useEffect triggered. Path:", pathname);
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log("onAuthStateChanged triggered. User:", currentUser ? currentUser.uid : null); // Add log
+      console.log("onAuthStateChanged triggered. User:", currentUser ? currentUser.uid : null, "Email:", currentUser?.email);
+      setLoading(true); // Start loading state for auth check
+
       if (currentUser) {
-        await updateUserDocument(currentUser);
-        const freshUser = auth.currentUser; // Re-fetch user data after potential updates
+        // User is authenticated
+        await updateUserDocument(currentUser); // Ensure Firestore is up-to-date
+        const freshUser = auth.currentUser; // Re-fetch potentially updated user data
         setUser(freshUser);
-        console.log("User is authenticated. Current path:", pathname); // Add log
-        // Redirect if user is authenticated and on login/signup page
-        if (pathname === '/login' || pathname === '/signup') {
-          console.log("Redirecting authenticated user from", pathname, "to /dashboard"); // Add log
-          router.push('/dashboard');
+
+        if (!freshUser?.email) {
+          // User authenticated but lacks email
+          console.log("User authenticated but missing email.");
+          if (pathname !== WELCOME_PATH) {
+            console.log(`Redirecting user ${freshUser?.uid} to ${WELCOME_PATH} to add email.`);
+            router.push(WELCOME_PATH);
+          } else {
+             console.log(`User is already on ${WELCOME_PATH}. No redirect needed.`);
+          }
+        } else {
+          // User authenticated and has email
+          console.log("User authenticated with email:", freshUser.email);
+          if (pathname === WELCOME_PATH || PUBLIC_PATHS.includes(pathname)) {
+             console.log(`Redirecting user ${freshUser.uid} from ${pathname} to /dashboard.`);
+            router.push('/dashboard');
+          } else {
+             console.log(`User is on an allowed authenticated path (${pathname}). No redirect needed.`);
+          }
         }
       } else {
+        // User is not authenticated
         setUser(null);
-        console.log("User is not authenticated."); // Add log
+        console.log("User is not authenticated.");
+        if (!PUBLIC_PATHS.includes(pathname) && pathname !== '/') { // Allow access to root '/' maybe landing page?
+           console.log(`Redirecting unauthenticated user from protected path ${pathname} to /login.`);
+          router.push('/login');
+        } else {
+           console.log(`User is on a public path (${pathname}). No redirect needed.`);
+        }
       }
-      setLoading(false);
-      console.log("Auth loading state set to false"); // Add log
+      setLoading(false); // End loading state
+      console.log("Auth loading state set to false");
     });
 
     return () => {
-      console.log("AuthProvider cleanup: Unsubscribing from onAuthStateChanged"); // Add log
+      console.log("AuthProvider cleanup: Unsubscribing from onAuthStateChanged");
       unsubscribe();
     }
-    // Add router and pathname to dependency array to re-run if navigation occurs
-    // while auth state is potentially changing, though primarily driven by auth changes.
-  }, [router, pathname]);
+    // Dependency array includes pathname to re-evaluate redirects on navigation
+  }, [pathname, router]); // Removed router from deps as it's stable, keep pathname
 
   // ... updateUserDocument remains the same ...
   const updateUserDocument = async (user: User) => {
@@ -107,7 +137,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Consider adding user-facing feedback here if needed
     }
   };
-
 
   // --- Authentication Functions ---
 
@@ -192,11 +221,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return linkWithProvider(provider);
   }
 
-
   // --- Other Functions ---
 
-  const logout = () => {
-    return signOut(auth);
+  const logout = async () => { // Make async
+    console.log("Attempting logout...");
+    try {
+      await signOut(auth);
+      setUser(null); // Clear user state immediately
+      console.log("Logout successful. Redirecting to /login.");
+      router.push('/login'); // Redirect after logout
+    } catch (error) {
+       console.error("Logout failed:", error);
+       // Optionally show an error toast to the user
+       throw error; // Re-throw if needed elsewhere
+    }
   }
 
   // ... updateUserProfile remains the same ...
@@ -219,24 +257,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Update local state if needed, though onAuthStateChanged might handle it
     setUser(auth.currentUser);
-  }
+  };
 
+  // --- New Function to Update Email ---
+  const updateUserEmail = async (email: string) => {
+    if (!auth.currentUser) {
+      throw new Error("No user logged in to update email.");
+    }
+    console.log(`Attempting to update email for user ${auth.currentUser.uid} to ${email}`);
+    const userRef = doc(db, "users", auth.currentUser.uid);
+
+    try {
+      // 1. Update Firestore document first (less likely to fail)
+      await updateDoc(userRef, { email: email });
+      console.log(`Firestore email updated for user ${auth.currentUser.uid}.`);
+
+      // 2. Attempt to update Firebase Auth email
+      // NOTE: This might fail if the user hasn't logged in recently,
+      // requiring re-authentication. Consider adding email verification flow later.
+      try {
+        await updateEmail(auth.currentUser, email);
+        console.log(`Firebase Auth email updated for user ${auth.currentUser.uid}.`);
+      } catch (authError: any) {
+        console.warn(`Failed to update Firebase Auth email directly for user ${auth.currentUser.uid}:`, authError);
+        // Common error: auth/requires-recent-login
+        // For now, we'll rely on the Firestore update.
+        // Consider prompting the user to re-authenticate or verify email later.
+        if (authError.code === "auth/requires-recent-login") {
+           // Optionally inform the user they might need to re-login for the change to fully apply everywhere.
+        }
+        // Don't throw here, as Firestore update succeeded.
+      }
+
+      // 3. Refresh user state locally to reflect potential changes
+      // Although onAuthStateChanged might pick it up, manual refresh ensures immediate UI update.
+      await auth.currentUser.reload(); // Fetches latest profile data
+      const refreshedUser = auth.currentUser;
+      setUser(refreshedUser); // Update context state
+      console.log(`User state refreshed. New email: ${refreshedUser?.email}`);
+
+    } catch (error) {
+      console.error(`Error updating email for user ${auth.currentUser.uid}:`, error);
+      throw new Error("Failed to update email. Please try again."); // Throw for the UI to catch
+    }
+  }
 
   const value = {
     user,
     loading,
     signInWithGoogle,
     signInWithTwitch,
-    linkWithGoogle, // Expose link function
-    linkWithTwitch, // Expose link function
+    linkWithGoogle,
+    linkWithTwitch,
     logout,
     updateUserProfile,
+    updateUserEmail, // Expose the new function
     isTwitchLoginDisabled
   }
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {/* Render children only when loading is finished to prevent layout shifts/flashes */}
+      {!loading ? children : (
+         // Optional: Render a global loading indicator while auth state resolves initially
+         <div className="flex h-screen items-center justify-center">
+           <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+         </div>
+      )}
     </AuthContext.Provider>
   )
 }
