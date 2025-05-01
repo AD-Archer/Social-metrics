@@ -13,7 +13,6 @@ import { db } from '@/lib/firebase';
 import { toast } from "@/components/ui/use-toast";
 import { User } from 'firebase/auth';
 
-// Define interfaces for the data structure
 interface RssFeedItem {
     title?: string;
     link?: string;
@@ -23,7 +22,6 @@ interface RssFeedItem {
     contentSnippet?: string;
 }
 
-// Export this interface so it can be imported elsewhere
 export interface RssFeedItemWithStats extends RssFeedItem {
     views?: number;
     likes?: number;
@@ -50,7 +48,6 @@ interface ConversionRate {
     change: number;
 }
 
-// Export this interface so it can be imported elsewhere
 export interface TrendData {
     monthly: {
         views: TrendComparisonData[];
@@ -66,24 +63,21 @@ export interface TrendData {
     lastUpdated: number;
 }
 
-// AI Analysis interfaces
 interface VideoAIAnalysis {
     summary?: string;
-    keywords?: string[] | string; // Allow string for comma-separated or array
+    keywords?: string[] | string;
     targetAudience?: string;
-    performanceBoostIdeas?: string[] | string; // Can be array or string
-    contentSuggestions?: string[] | string; // Can be array or string
+    performanceBoostIdeas?: string[] | string;
+    contentSuggestions?: string[] | string;
     isLoading?: boolean;
     error?: string;
-    raw_analysis?: string; // To store raw response if parsing fails
+    raw_analysis?: string;
 }
 
-// Helper function to generate placeholder statistics
 const generatePlaceholderStat = (base: number, variance: number): number => {
     return Math.floor(base + (Math.random() - 0.5) * variance * 2);
 };
 
-// Helper function to generate monthly comparison data
 const generateMonthlyComparisonData = (metric: string, baseValue: number): TrendComparisonData[] => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
@@ -110,7 +104,6 @@ const generateMonthlyComparisonData = (metric: string, baseValue: number): Trend
     });
 };
 
-// Helper function to generate yearly comparison data
 const generateYearlyComparisonData = (metric: string, baseValue: number): YearlyComparisonDataPoint[] => {
     const currentYear = new Date().getFullYear();
     const years = [currentYear - 2, currentYear - 1, currentYear];
@@ -141,8 +134,6 @@ const generateYearlyComparisonData = (metric: string, baseValue: number): Yearly
     return yearData;
 };
 
-// Define the state structure and actions
-// Export this interface so it can be imported elsewhere
 export interface YoutubeState {
     feedItems: RssFeedItemWithStats[];
     trendData: TrendData | null;
@@ -157,7 +148,6 @@ export interface YoutubeState {
     getVideoAnalysis: (videoId: string) => VideoAIAnalysis | undefined;
 }
 
-// Define the initial state values
 const initialState = {
     feedItems: [],
     trendData: null,
@@ -166,13 +156,11 @@ const initialState = {
     rssConfigured: false,
 };
 
-// Create the Zustand store with persistence middleware
 export const useYoutubeStore = create<YoutubeState>()(
     persist(
         (set, get) => ({
             ...initialState,
 
-            // Action to fetch the YouTube RSS feed
             fetchFeed: async (user, showToast) => {
                 if (!user) {
                     set({ isLoading: false, error: "User not authenticated." });
@@ -199,7 +187,6 @@ export const useYoutubeStore = create<YoutubeState>()(
 
                     set({ rssConfigured: true });
                     const encodedRssUrl = encodeURIComponent(rssUrl);
-                    // Fetch from the API endpoint
                     const response = await fetch(`/api/youtube/rss?rssUrl=${encodedRssUrl}`, {
                         cache: 'no-store',
                         headers: { 'Content-Type': 'application/json' }
@@ -220,7 +207,6 @@ export const useYoutubeStore = create<YoutubeState>()(
 
                     const data = await response.json();
 
-                    // Process and enhance feed items with stats
                     const sortedItemsWithStats = (data.items || [])
                         .sort((a: RssFeedItem, b: RssFeedItem) => {
                             const dateA = a.isoDate ? new Date(a.isoDate).getTime() : 0;
@@ -244,7 +230,6 @@ export const useYoutubeStore = create<YoutubeState>()(
 
                     set({ feedItems: sortedItemsWithStats, isLoading: false, error: null });
                     
-                    // Generate trend data after feed is loaded
                     get().generateTrendData(sortedItemsWithStats);
 
                 } catch (err: unknown) {
@@ -259,9 +244,7 @@ export const useYoutubeStore = create<YoutubeState>()(
                 }
             },
 
-            // Action to generate trend data based on feed items
             generateTrendData: (feedItems: RssFeedItemWithStats[]) => {
-                // Calculate total stats to use as base values
                 const totalStats = feedItems.reduce(
                     (acc: { views: number; likes: number; comments: number }, item) => {
                         acc.views += item.views || 0;
@@ -272,31 +255,27 @@ export const useYoutubeStore = create<YoutubeState>()(
                     { views: 0, likes: 0, comments: 0 }
                 );
                 
-                // Base values for trends, adjusted based on actual data
                 const viewsBase = Math.max(totalStats.views / (feedItems.length || 1), 1000);
                 const likesBase = Math.max(totalStats.likes / (feedItems.length || 1), 50);
                 const commentsBase = Math.max(totalStats.comments / (feedItems.length || 1), 10);
                 
-                // Generate monthly comparison data
                 const monthlyData = {
                     views: generateMonthlyComparisonData('views', viewsBase),
                     likes: generateMonthlyComparisonData('likes', likesBase),
                     comments: generateMonthlyComparisonData('comments', commentsBase),
                 };
                 
-                // Generate yearly comparison data
                 const yearlyData = {
                     views: generateYearlyComparisonData('views', viewsBase),
                     likes: generateYearlyComparisonData('likes', likesBase),
                     comments: generateYearlyComparisonData('comments', commentsBase),
                 };
                 
-                // Generate conversion rate metrics
                 const conversionRates = [
                     {
                         name: "Likes to Views",
                         value: totalStats.views > 0 ? (totalStats.likes / totalStats.views) * 100 : 0,
-                        change: (Math.random() * 35) - 15, // Random change between -15% and +20%
+                        change: (Math.random() * 35) - 15,
                     },
                     {
                         name: "Comments to Views",
@@ -310,7 +289,6 @@ export const useYoutubeStore = create<YoutubeState>()(
                     }
                 ];
                 
-                // Create trend data object
                 const trendData: TrendData = {
                     monthly: monthlyData,
                     yearly: yearlyData,
@@ -321,11 +299,9 @@ export const useYoutubeStore = create<YoutubeState>()(
                 set({ trendData });
             },
 
-            // Action to analyze a video with AI
             analyzeVideoWithAI: async (videoId, showToast) => {
                 const { feedItems } = get();
                 
-                // Find the video by its guid or link (which contain the video ID)
                 const videoIndex = feedItems.findIndex(item => 
                     (item.guid && item.guid.includes(videoId)) || 
                     (item.link && item.link.includes(videoId))
@@ -340,7 +316,6 @@ export const useYoutubeStore = create<YoutubeState>()(
                     return;
                 }
                 
-                // Mark video as loading analysis
                 const updatedItems = [...feedItems];
                 updatedItems[videoIndex] = {
                     ...updatedItems[videoIndex],
@@ -348,17 +323,15 @@ export const useYoutubeStore = create<YoutubeState>()(
                         ...updatedItems[videoIndex].aiAnalysis,
                         isLoading: true,
                         error: undefined,
-                        raw_analysis: undefined, // Clear previous raw analysis
+                        raw_analysis: undefined,
                     }
                 };
                 
                 set({ feedItems: updatedItems });
                 
                 try {
-                    // Get the video title and description for analysis
                     const { title, contentSnippet } = updatedItems[videoIndex];
                     
-                    // Call the AI analysis API
                     const response = await fetch('/api/youtube/ai', {
                         method: 'POST',
                         headers: {
@@ -373,14 +346,11 @@ export const useYoutubeStore = create<YoutubeState>()(
                     const analysisData = await response.json();
                     
                     if (!response.ok) {
-                        // Handle API errors specifically
                         throw new Error(analysisData.error || `Failed to analyze video (Status: ${response.status})`);
                     }
 
-                    // Check if the analysis itself reported an error (e.g., parsing failed on server)
                     if (analysisData.error) {
                          console.warn("AI Analysis reported an error:", analysisData.error);
-                         // Store the raw analysis if available
                          const finalUpdatedItems = [...get().feedItems];
                          finalUpdatedItems[videoIndex] = {
                              ...finalUpdatedItems[videoIndex],
@@ -396,23 +366,20 @@ export const useYoutubeStore = create<YoutubeState>()(
                              description: analysisData.error,
                              variant: "default",
                          });
-                         return; // Stop further processing
+                         return;
                     }
 
-                    // Update video with analysis results
                     const finalUpdatedItems = [...get().feedItems];
                     finalUpdatedItems[videoIndex] = {
                         ...finalUpdatedItems[videoIndex],
                         aiAnalysis: {
                             summary: analysisData.summary,
-                            // Handle both array and comma-separated string for keywords
                             keywords: Array.isArray(analysisData.keywords)
                                 ? analysisData.keywords
                                 : typeof analysisData.keywords === 'string'
                                     ? analysisData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean)
                                     : [],
                             targetAudience: analysisData.targetAudience,
-                            // Handle both array and string for ideas/suggestions
                             performanceBoostIdeas: analysisData.performanceBoostIdeas,
                             contentSuggestions: analysisData.contentSuggestions,
                             isLoading: false,
@@ -430,7 +397,6 @@ export const useYoutubeStore = create<YoutubeState>()(
                 } catch (err) {
                     console.error("AI analysis error:", err);
                     
-                    // Update video with error information
                     const errorItems = [...get().feedItems];
                     const errorMessage = err instanceof Error ? err.message : "Failed to analyze video";
                     errorItems[videoIndex] = {
@@ -452,7 +418,6 @@ export const useYoutubeStore = create<YoutubeState>()(
                 }
             },
             
-            // Helper method to check if a video is currently being analyzed
             isAnalyzingVideo: (videoId) => {
                 const { feedItems } = get();
                 const video = feedItems.find(item => 
@@ -462,7 +427,6 @@ export const useYoutubeStore = create<YoutubeState>()(
                 return video?.aiAnalysis?.isLoading || false;
             },
             
-            // Helper method to get video analysis results
             getVideoAnalysis: (videoId) => {
                 const { feedItems } = get();
                 const video = feedItems.find(item => 
@@ -472,7 +436,6 @@ export const useYoutubeStore = create<YoutubeState>()(
                 return video?.aiAnalysis;
             },
 
-            // Action to reset the store to its initial state
             resetState: () => set(initialState),
         }),
         {

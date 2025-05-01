@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { YouTubeRssHelp } from "@/components/youtube-rss-help";
 import { cn } from "@/lib/utils";
 import type { SocialAccount } from "@/context/account-context";
-import type { UserSettings } from "./page"; // Import the type
+import type { UserSettings } from "../page"; // Import the type
 
 interface ConnectionSettingsProps {
   connectionSettings: UserSettings['connections']; // Receive only connections part

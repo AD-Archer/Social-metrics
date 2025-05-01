@@ -18,8 +18,8 @@ import { useAccounts } from "@/context/account-context";
 import { useSettingsStore } from "@/store/settings-store";
 
 // Import the child components
-import { ProfileSettings } from "./profile-settings";
-import { ConnectionSettings } from "./connection-settings";
+import { ProfileSettings } from "./components/profile-settings";
+import { ConnectionSettings } from "./components/connection-settings";
 
 
 export type SocialPlatform = 'youtube';

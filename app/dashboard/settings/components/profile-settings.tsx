@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { UserSettings } from "./page"; // Import the type
+import type { UserSettings } from "../page"; // Import the type
 
 interface ProfileSettingsProps {
   profileSettings: UserSettings['profile']; // Receive only the profile part
