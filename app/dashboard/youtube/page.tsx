@@ -80,6 +80,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { YoutubePageHeader } from "./components/YoutubePageHeader";
 import { YoutubeVideoDialog } from "./components/YoutubeVideoDialog";
+import { YoutubeAIChat } from "@/components/youtube-ai-chat"; 
 
 interface SelectedVideoType {
   title?: string;
@@ -285,7 +286,7 @@ export default function YoutubePage() {
               <p>{error}</p>
               {(isPermissionError || configError) && (
                 <p>
-                  Please check your <Link href="/dashboard/settings?tab=connections" className="underline">settings</Link> and ensure your YouTube RSS feed URL is correctly configured using the Channel ID format.
+                  Please check your <Link href="/dashboard/settings#tab=connections" className="underline">settings</Link> and ensure your YouTube RSS feed URL is correctly configured using the Channel ID format.
                 </p>
               )}
             </div>
@@ -740,8 +741,11 @@ export default function YoutubePage() {
   return (
     <div className="space-y-6">
       <YoutubePageHeader youtubeAccount={youtubeAccount} />
+      <YoutubeAIChat />
+
 
       {renderContent()}
+          {/* AI Chat Section */}
 
       <YoutubeVideoDialog
         isOpen={isDialogOpen}
@@ -749,6 +753,7 @@ export default function YoutubePage() {
         selectedVideo={selectedVideo}
         formatDate={formatDate}
       />
+
     </div>
   );
 }
