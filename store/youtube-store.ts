@@ -4,6 +4,7 @@
  * including feed items, loading status, errors, and configuration status.
  * Provides trend analysis with historical data comparisons and conversion metrics.
  * Data is persisted to local storage to retain state across sessions.
+ * Includes AI analysis capabilities for video content insights.
  */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -26,6 +27,7 @@ interface RssFeedItemWithStats extends RssFeedItem {
     views?: number;
     likes?: number;
     comments?: number;
+    aiAnalysis?: VideoAIAnalysis;
 }
 
 interface TrendComparisonData {
@@ -60,6 +62,15 @@ interface TrendData {
     };
     conversion: ConversionRate[];
     lastUpdated: number;
+}
+
+// AI Analysis interfaces
+interface VideoAIAnalysis {
+    summary?: string;
+    keywords?: string[];
+    targetAudience?: string;
+    isLoading?: boolean;
+    error?: string;
 }
 
 // Helper function to generate placeholder statistics
@@ -135,6 +146,9 @@ interface YoutubeState {
     fetchFeed: (user: User | null | undefined, showToast: typeof toast) => Promise<void>;
     generateTrendData: (feedItems: RssFeedItemWithStats[]) => void;
     resetState: () => void;
+    analyzeVideoWithAI: (videoId: string, showToast: typeof toast) => Promise<void>;
+    isAnalyzingVideo: (videoId: string) => boolean;
+    getVideoAnalysis: (videoId: string) => VideoAIAnalysis | undefined;
 }
 
 // Define the initial state values
@@ -299,6 +313,129 @@ export const useYoutubeStore = create<YoutubeState>()(
                 };
                 
                 set({ trendData });
+            },
+
+            // Action to analyze a video with AI
+            analyzeVideoWithAI: async (videoId, showToast) => {
+                const { feedItems } = get();
+                
+                // Find the video by its guid or link (which contain the video ID)
+                const videoIndex = feedItems.findIndex(item => 
+                    (item.guid && item.guid.includes(videoId)) || 
+                    (item.link && item.link.includes(videoId))
+                );
+                
+                if (videoIndex === -1) {
+                    showToast({
+                        title: "Analysis Error",
+                        description: "Video not found in your feed.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+                
+                // Mark video as loading analysis
+                const updatedItems = [...feedItems];
+                updatedItems[videoIndex] = {
+                    ...updatedItems[videoIndex],
+                    aiAnalysis: {
+                        ...updatedItems[videoIndex].aiAnalysis,
+                        isLoading: true,
+                        error: undefined
+                    }
+                };
+                
+                set({ feedItems: updatedItems });
+                
+                try {
+                    // Get the video title and description for analysis
+                    const { title, contentSnippet } = updatedItems[videoIndex];
+                    
+                    // Call the AI analysis API
+                    const response = await fetch('/api/youtube/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title,
+                            description: contentSnippet
+                        }),
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to analyze video');
+                    }
+                    
+                    const analysisData = await response.json();
+                    
+                    // Update video with analysis results
+                    const finalUpdatedItems = [...get().feedItems];
+                    finalUpdatedItems[videoIndex] = {
+                        ...finalUpdatedItems[videoIndex],
+                        aiAnalysis: {
+                            summary: analysisData.summary,
+                            keywords: Array.isArray(analysisData.keywords) 
+                                ? analysisData.keywords 
+                                : typeof analysisData.keywords === 'string'
+                                    ? analysisData.keywords.split(',').map((k: string) => k.trim())
+                                    : [],
+                            targetAudience: analysisData.targetAudience,
+                            isLoading: false,
+                            error: undefined
+                        }
+                    };
+                    
+                    set({ feedItems: finalUpdatedItems });
+                    
+                    showToast({
+                        title: "Analysis Complete",
+                        description: "AI insights for your video are ready.",
+                    });
+                    
+                } catch (err) {
+                    console.error("AI analysis error:", err);
+                    
+                    // Update video with error information
+                    const errorItems = [...get().feedItems];
+                    errorItems[videoIndex] = {
+                        ...errorItems[videoIndex],
+                        aiAnalysis: {
+                            ...errorItems[videoIndex].aiAnalysis,
+                            isLoading: false,
+                            error: err instanceof Error ? err.message : "Failed to analyze video"
+                        }
+                    };
+                    
+                    set({ feedItems: errorItems });
+                    
+                    showToast({
+                        title: "Analysis Failed",
+                        description: err instanceof Error ? err.message : "Failed to analyze your video with AI.",
+                        variant: "destructive",
+                    });
+                }
+            },
+            
+            // Helper method to check if a video is currently being analyzed
+            isAnalyzingVideo: (videoId) => {
+                const { feedItems } = get();
+                const video = feedItems.find(item => 
+                    (item.guid && item.guid.includes(videoId)) || 
+                    (item.link && item.link.includes(videoId))
+                );
+                return video?.aiAnalysis?.isLoading || false;
+            },
+            
+            // Helper method to get video analysis results
+            getVideoAnalysis: (videoId) => {
+                const { feedItems } = get();
+                const video = feedItems.find(item => 
+                    (item.guid && item.guid.includes(videoId)) || 
+                    (item.link && item.link.includes(videoId))
+                );
+                return video?.aiAnalysis;
             },
 
             // Action to reset the store to its initial state
