@@ -1,3 +1,8 @@
+/**
+ * RootLayout: Defines the HTML structure and global providers for the app.
+ * Sets up the theme, auth, and account context wrappers.
+ * Exports a metadata configuration for SEO, Open Graph, and Twitter cards.
+ */
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -11,6 +16,29 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "SocialMetrics - Social Media Analytics Dashboard",
   description: "Track and analyze your social media performance across multiple platforms.",
+  keywords: ["Social Media", "Analytics", "Dashboard", "YouTube", "Instagram", "Marketing"],
+  viewport: "width=device-width, initial-scale=1",
+  openGraph: {
+    title: "SocialMetrics - Unified Social Media Dashboard",
+    description: "View real-time analytics and insights across YouTube, Instagram, and more.",
+    url: "https://socialmetrics.adarcher.app",
+    siteName: "SocialMetrics",
+    type: "website",
+    images: [
+      {
+        url: "https://socialmetrics.adarcher.app/img/exampleimageofsite.png",
+        width: 1200,
+        height: 630,
+        alt: "SocialMetrics Dashboard Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SocialMetrics - Social Dashboard",
+    description: "Consolidate your social media insights in one dashboard.",
+    images: ["https://socialmetrics.adarcher.app/img/exampleimageofsite.png"],
+  },
 }
 
 export default function RootLayout({

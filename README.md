@@ -5,8 +5,10 @@
 **Developer:** ad-archer  
 **Completion Date:** April 28, 2025  
 **GitHub Repository:** https://github.com/ad-archer/social-dash.git  
-**Trello:**   
-**Live Demo:**  https://socialmetrics.adarcher.app/dashboard
+**Trello:** https://trello.com/invite/b/68068f8083d850bef9245db5/ATTIa2848198df96ca5274eff2d228735452487E9D2E/social-dash
+**Live Demo:**  https://socialmetrics.adarcher.app/
+
+![Dashboard Overview](https://socialmetrics.adarcher.app/img/exampleimageofsite.png)
 
 ---
 
@@ -35,6 +37,7 @@ Social Dashboard offers a unified Next.js-based interface that integrates Google
 - User settings page for profile updates and preferences.
 - CI pipeline ensures code quality via GitHub Actions (lint, typecheck, build).
 - YouTube RSS feed integration for displaying recent content.
+- AI anaylsis of social metrics
 
 ### Value Proposition
 By consolidating metrics in one dashboard, users save time on data collection, reduce login friction, and gain actionable insights faster than with siloed platform dashboards.
@@ -45,6 +48,7 @@ By consolidating metrics in one dashboard, users save time on data collection, r
 - **Frontend:** Next.js 15, React 19  
 - **Language:** TypeScript  
 - **Authentication:** Firebase Authentication (Google OAuth)  
+- **Large Langauge Model** Open AI gpt-4o-mini
 - **Styling:** Tailwind CSS, Radix UI  
 - **Visualization:** Recharts  
 - **Package Manager:** pnpm  
@@ -63,6 +67,7 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
+OPENAI_API_KEY=
 ```
 
 ### Server-Side Firebase Admin
@@ -101,10 +106,7 @@ pnpm dev
 ```
 
 ### Firebase Rules
-The project includes Firestore security rules in `/firebase/rules/firestores.rules`. Deploy these using:
-```bash
-firebase deploy --only firestore:rules
-```
+The project includes Firestore security rules in `/firebase/rules/firestores.rules`.
 
 ---
 
@@ -124,31 +126,21 @@ Make sure to set all the environment variables mentioned in the Firebase Setup s
 - Allow users to customize dashboard widgets
 - Implement role-based access for team accounts
 
----
+## Visual Overview
 
-## Lessons Learned
-
-
-
----
-
-## Project Management
-
-### Development Timeline
+### Screenshots
 
 
+![Screen 1](https://socialmetrics.adarcher.app/img/screen1.png)
 
-### Tools and Resources Used
-
-
-
----
-
-## Conclusion
+![Screen 2](https://socialmetrics.adarcher.app/img/screen2.png)
 
 
+### Diagrams
 
----
+![Entity Relationship Diagram](https://socialmetrics.adarcher.app/img/ERD.png)
+
+![Wireframe Diagram](https://socialmetrics.adarcher.app/img/wireframe.svg)
 
 ## Appendix
 
@@ -169,4 +161,5 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-### Additional Resources
+
+
