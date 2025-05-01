@@ -12,7 +12,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, Bell, X } from "lucide-react"
+import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, X } from "lucide-react"
 import Head from 'next/head'
 
 import { Button } from "@/components/ui/button"
@@ -149,10 +149,6 @@ export default function DashboardLayout({
                 <span className="hidden md:inline-block">SocialMetrics</span>
               </div>
               <div className="flex-1"></div>
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Bell className="h-4 w-4" />
-                <span className="sr-only">Notifications</span>
-              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">

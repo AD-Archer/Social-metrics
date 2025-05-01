@@ -3,12 +3,12 @@
  * Displays and allows editing of user profile information like name, username,
  * email (display only usually), and bio. It receives profile data and the
  * save handler via props from the parent settings page, which sources them
- * from the `useSettingsStore`.
+ * from the `useSettingsStore`. Avatar functionality has been removed.
  */
 "use client";
 
 import type React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// Removed Avatar imports: import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,7 @@ interface ProfileSettingsProps {
 }
 
 export function ProfileSettings({ profileSettings, isLoading, handleSaveProfile }: ProfileSettingsProps) {
-  // Derive initials for Avatar fallback
-  const initials = `${profileSettings.firstName?.[0] ?? ''}${profileSettings.lastName?.[0] ?? ''}`.toUpperCase();
+  // Removed initials derivation: const initials = `${profileSettings.firstName?.[0] ?? ''}${profileSettings.lastName?.[0] ?? ''}`.toUpperCase();
 
   return (
     <Card>
@@ -34,14 +33,13 @@ export function ProfileSettings({ profileSettings, isLoading, handleSaveProfile 
           <CardDescription>Update your personal information.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
+          {/* Removed Avatar section */}
+          {/* <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={profileSettings.avatarUrl} alt="User avatar" />
               <AvatarFallback>{initials || 'U'}</AvatarFallback>
             </Avatar>
-            {/* Future: Add avatar upload functionality */}
-            {/* <Button variant="outline" size="sm" disabled>Upload</Button> */}
-          </div>
+          </div> */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>

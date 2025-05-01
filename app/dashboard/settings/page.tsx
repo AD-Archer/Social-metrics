@@ -2,8 +2,7 @@
  * User settings page component that orchestrates profile and connection
  * settings sub-components. It utilizes the `useSettingsStore` for state management,
  * fetches user data, handles tab navigation via URL hash fragments, and passes
- * necessary data and handlers down to the child components. It also uses
- * `useAccounts` context for OAuth connection management.
+ * necessary data and handlers down to the child components.
  */
 "use client"
 
@@ -14,7 +13,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { useAccounts } from "@/context/account-context";
+// Removed useAccounts import
 import { useSettingsStore } from "@/store/settings-store";
 
 // Import the child components
@@ -52,7 +51,6 @@ export default function SettingsPage() {
     isLoading,
     youtubeRssUrlInput,
     showHelpComponent,
-    rssUrlEmpty,
     fetchUserSettings,
     saveProfile,
     saveYoutubeRssUrl,
@@ -60,8 +58,7 @@ export default function SettingsPage() {
     setShowHelpComponent,
   } = useSettingsStore();
 
-  // Access account connection state and actions from context
-  const { accounts, connectAccount, disconnectAccount } = useAccounts();
+  // Removed useAccounts hook call
 
   // Removed hasPasswordProvider calculation
 
@@ -124,26 +121,7 @@ export default function SettingsPage() {
     setYoutubeRssUrlInput(e.target.value);
   };
 
-  // Connection toggle handler (uses Account Context)
-  const handleToggleConnectionClick = (platform: string, isConnected: boolean) => {
-    // This logic remains tied to the Account Context for now
-    // Consider moving setLoading into the store if this becomes complex
-    // setLoading(true); // Potentially use store's setLoading
-    if (isConnected) {
-      disconnectAccount(platform as SocialPlatform);
-      toast({
-        title: "Account disconnected",
-        description: `Your ${platform} account has been disconnected.`,
-      });
-    } else {
-      connectAccount(platform as SocialPlatform);
-      toast({
-        title: "Account connected",
-        description: `Your ${platform} account has been connected successfully.`,
-      });
-    }
-    // setLoading(false); // Potentially use store's setLoading
-  };
+  // Removed handleToggleConnectionClick function
 
   // Handler for changing tabs
   const handleTabChange = (value: string) => {
@@ -189,14 +167,12 @@ export default function SettingsPage() {
           <ConnectionSettings
             connectionSettings={settings.connections}
             isLoading={isLoading}
-            accounts={accounts}
-            handleToggleConnection={handleToggleConnectionClick}
+            // Removed accounts and handleToggleConnection props
             youtubeRssUrlInput={youtubeRssUrlInput}
             handleRssUrlChange={handleRssUrlInputChange}
             handleSaveYoutubeRssUrl={handleSaveYoutubeRssUrlClick}
             showHelpComponent={showHelpComponent}
             setShowHelpComponent={setShowHelpComponent}
-            rssUrlEmpty={rssUrlEmpty}
           />
         </TabsContent>
       </Tabs>
