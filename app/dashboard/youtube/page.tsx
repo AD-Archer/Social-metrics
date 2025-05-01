@@ -6,6 +6,7 @@
  * Allows viewing video descriptions in a dialog.
  * Features interactive charts for visualizing video statistics with responsive design.
  * Provides trends analysis for comparing performance over time periods.
+ * Includes an AI chat interface for interacting with a YouTube assistant.
  */
 "use client";
 
@@ -88,6 +89,7 @@ import {
 } from "@/components/ui/select";
 import { useIsMobile } from '@/components/ui/use-mobile';
 import { Badge } from "@/components/ui/badge";
+import { YoutubeAIChat } from '@/components/youtube-ai-chat'; // Import the new chat component
 
 interface SelectedVideoType {
   title?: string;
@@ -740,11 +742,12 @@ export default function YoutubePage() {
           </CardContent>
         </Card>
 
-  
+        {/* AI Chat Section */}
+        <YoutubeAIChat />
 
         {/* Footer Note */}
         <footer className="text-center text-xs text-muted-foreground pt-4">
-          Analytics data shown is illustrative.
+          Analytics data shown is illustrative. AI responses are generated and may require verification.
         </footer>
       </div>
     );

@@ -1,7 +1,8 @@
 /**
  * API route handler for analyzing YouTube video data using OpenAI.
  * Expects video title and description in the POST request body.
- * Connects to the OpenAI API to generate insights based on the provided data.
+ * Connects to the OpenAI API to generate insights, keywords, target audience,
+ * performance boost ideas, and content suggestions based on the provided data.
  */
 import { NextResponse, type NextRequest } from 'next/server';
 import OpenAI from 'openai';
@@ -59,22 +60,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     Title: ${title}
     ${description ? `Description: ${description}` : ''}
 
-    Provide the following analysis:
-    1. A concise summary of the video's likely content (1-2 sentences).
-    2. Suggested relevant keywords or tags (comma-separated).
-    3. An estimated target audience.
-
-    Format the response as a JSON object with keys: "summary", "keywords", "targetAudience".
+    Provide the following analysis as a JSON object with keys: "summary", "keywords", "targetAudience", "performanceBoostIdeas", "contentSuggestions":
+    1.  **summary**: A concise summary of the video's likely content (1-2 sentences).
+    2.  **keywords**: Suggested relevant keywords or tags (comma-separated string or array of strings).
+    3.  **targetAudience**: An estimated target audience profile (e.g., demographics, interests).
+    4.  **performanceBoostIdeas**: 2-3 actionable ideas to potentially improve this video's performance (e.g., title tweaks, thumbnail suggestions, promotion strategies). Keep each idea brief.
+    5.  **contentSuggestions**: 1-2 related content ideas based on this video's topic and potential audience interest. Keep each suggestion brief.
   `;
 
   try {
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o', // Using a capable model
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.5, // Adjust creativity (0=deterministic, 1=max creativity)
-      max_tokens: 150, // Limit response length
-      response_format: { type: "json_object" }, // Request JSON output if using compatible models
+      temperature: 0.6, // Slightly increased creativity for suggestions
+      max_tokens: 300, // Increased token limit for more detailed suggestions
+      response_format: { type: "json_object" }, // Request JSON output
     });
 
     const analysisContent = completion.choices[0]?.message?.content;
@@ -91,11 +92,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.error('Error parsing OpenAI response:', parseError);
         console.error('Raw OpenAI response:', analysisContent);
         // Fallback: return the raw string if JSON parsing fails
-        analysisResult = { raw_analysis: analysisContent };
-        // Or return an error:
+        // Consider returning a structured error instead of raw analysis
+        analysisResult = { error: 'Failed to parse analysis from OpenAI.', raw_analysis: analysisContent };
         // return NextResponse.json({ error: 'Failed to parse analysis from OpenAI.' }, { status: 500 });
     }
-
 
     // Return the analysis
     return NextResponse.json(

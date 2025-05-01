@@ -4,7 +4,7 @@
  * including feed items, loading status, errors, and configuration status.
  * Provides trend analysis with historical data comparisons and conversion metrics.
  * Data is persisted to local storage to retain state across sessions.
- * Includes AI analysis capabilities for video content insights.
+ * Includes AI analysis capabilities for video content insights, performance ideas, and content suggestions.
  */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -23,7 +23,8 @@ interface RssFeedItem {
     contentSnippet?: string;
 }
 
-interface RssFeedItemWithStats extends RssFeedItem {
+// Export this interface so it can be imported elsewhere
+export interface RssFeedItemWithStats extends RssFeedItem {
     views?: number;
     likes?: number;
     comments?: number;
@@ -49,7 +50,8 @@ interface ConversionRate {
     change: number;
 }
 
-interface TrendData {
+// Export this interface so it can be imported elsewhere
+export interface TrendData {
     monthly: {
         views: TrendComparisonData[];
         likes: TrendComparisonData[];
@@ -67,10 +69,13 @@ interface TrendData {
 // AI Analysis interfaces
 interface VideoAIAnalysis {
     summary?: string;
-    keywords?: string[];
+    keywords?: string[] | string; // Allow string for comma-separated or array
     targetAudience?: string;
+    performanceBoostIdeas?: string[] | string; // Can be array or string
+    contentSuggestions?: string[] | string; // Can be array or string
     isLoading?: boolean;
     error?: string;
+    raw_analysis?: string; // To store raw response if parsing fails
 }
 
 // Helper function to generate placeholder statistics
@@ -137,7 +142,8 @@ const generateYearlyComparisonData = (metric: string, baseValue: number): Yearly
 };
 
 // Define the state structure and actions
-interface YoutubeState {
+// Export this interface so it can be imported elsewhere
+export interface YoutubeState {
     feedItems: RssFeedItemWithStats[];
     trendData: TrendData | null;
     isLoading: boolean;
@@ -341,7 +347,8 @@ export const useYoutubeStore = create<YoutubeState>()(
                     aiAnalysis: {
                         ...updatedItems[videoIndex].aiAnalysis,
                         isLoading: true,
-                        error: undefined
+                        error: undefined,
+                        raw_analysis: undefined, // Clear previous raw analysis
                     }
                 };
                 
@@ -363,25 +370,51 @@ export const useYoutubeStore = create<YoutubeState>()(
                         }),
                     });
                     
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error || 'Failed to analyze video');
-                    }
-                    
                     const analysisData = await response.json();
                     
+                    if (!response.ok) {
+                        // Handle API errors specifically
+                        throw new Error(analysisData.error || `Failed to analyze video (Status: ${response.status})`);
+                    }
+
+                    // Check if the analysis itself reported an error (e.g., parsing failed on server)
+                    if (analysisData.error) {
+                         console.warn("AI Analysis reported an error:", analysisData.error);
+                         // Store the raw analysis if available
+                         const finalUpdatedItems = [...get().feedItems];
+                         finalUpdatedItems[videoIndex] = {
+                             ...finalUpdatedItems[videoIndex],
+                             aiAnalysis: {
+                                 isLoading: false,
+                                 error: analysisData.error,
+                                 raw_analysis: analysisData.raw_analysis,
+                             }
+                         };
+                         set({ feedItems: finalUpdatedItems });
+                         showToast({
+                             title: "Analysis Partially Failed",
+                             description: analysisData.error,
+                             variant: "default",
+                         });
+                         return; // Stop further processing
+                    }
+
                     // Update video with analysis results
                     const finalUpdatedItems = [...get().feedItems];
                     finalUpdatedItems[videoIndex] = {
                         ...finalUpdatedItems[videoIndex],
                         aiAnalysis: {
                             summary: analysisData.summary,
-                            keywords: Array.isArray(analysisData.keywords) 
-                                ? analysisData.keywords 
+                            // Handle both array and comma-separated string for keywords
+                            keywords: Array.isArray(analysisData.keywords)
+                                ? analysisData.keywords
                                 : typeof analysisData.keywords === 'string'
-                                    ? analysisData.keywords.split(',').map((k: string) => k.trim())
+                                    ? analysisData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean)
                                     : [],
                             targetAudience: analysisData.targetAudience,
+                            // Handle both array and string for ideas/suggestions
+                            performanceBoostIdeas: analysisData.performanceBoostIdeas,
+                            contentSuggestions: analysisData.contentSuggestions,
                             isLoading: false,
                             error: undefined
                         }
@@ -399,12 +432,13 @@ export const useYoutubeStore = create<YoutubeState>()(
                     
                     // Update video with error information
                     const errorItems = [...get().feedItems];
+                    const errorMessage = err instanceof Error ? err.message : "Failed to analyze video";
                     errorItems[videoIndex] = {
                         ...errorItems[videoIndex],
                         aiAnalysis: {
                             ...errorItems[videoIndex].aiAnalysis,
                             isLoading: false,
-                            error: err instanceof Error ? err.message : "Failed to analyze video"
+                            error: errorMessage,
                         }
                     };
                     
@@ -412,7 +446,7 @@ export const useYoutubeStore = create<YoutubeState>()(
                     
                     showToast({
                         title: "Analysis Failed",
-                        description: err instanceof Error ? err.message : "Failed to analyze your video with AI.",
+                        description: errorMessage,
                         variant: "destructive",
                     });
                 }

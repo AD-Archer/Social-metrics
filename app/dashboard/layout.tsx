@@ -4,6 +4,7 @@
  * Includes responsive sidebar for navigation, header with user controls,
  * and handles protected routes with authentication.
  * Mobile-optimized with collapsible sidebar and responsive design patterns.
+ * The sidebar is fixed on desktop screens.
  */
 
 import type React from "react"
@@ -168,7 +169,8 @@ export default function DashboardLayout({
             </DropdownMenu>
           </header>
           <div className="flex flex-1">
-            <aside className="hidden w-64 shrink-0 border-r md:block glass-card bg-sidebar-background/90 backdrop-blur-xl shadow-2xl border-l-4 border-l-primary/40">
+            {/* Sidebar: Added fixed positioning and height */}
+            <aside className="hidden w-64 shrink-0 border-r md:block glass-card bg-sidebar-background/90 backdrop-blur-xl shadow-2xl border-l-4 border-l-primary/40 fixed top-16 left-0 h-[calc(100vh-4rem)] z-40"> {/* Adjusted classes for fixed positioning */}
               <div className="flex h-full flex-col gap-2 p-4">
                 <nav className="grid gap-1 pt-2">
                   {navigation.map((item) => (
@@ -188,7 +190,10 @@ export default function DashboardLayout({
                 </nav>
               </div>
             </aside>
-            <main className="flex-1 max-w-full md:max-w-5xl mx-auto p-3 md:p-8 flex flex-col w-full">{children}</main>
+            {/* Main content: Added padding-left to accommodate fixed sidebar */}
+            <main className="flex-1 p-3 md:p-8 flex flex-col w-full md:pl-72 pt-16"> {/* Added md:pl-72 and pt-16 */}
+              {children}
+            </main>
           </div>
 
           {/* Toast notifications */}
