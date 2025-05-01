@@ -1,7 +1,7 @@
 /**
  * @fileoverview Login page component. Allows users to log in using Google OAuth.
  * This page uses the AuthContext for handling Google sign-in and redirects users
- * to the dashboard upon successful login.
+ * to the dashboard upon successful login. Twitch login is temporarily disabled.
  */
 "use client"
 
@@ -10,13 +10,15 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Info } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import SMLogo from "@/components/sm_logo"
 import { useAuth } from "@/context/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -31,9 +33,8 @@ export default function LoginPage() {
     try {
       await signInWithGoogle()
       router.push("/dashboard")
-    } catch (err: unknown) { // Type the error as unknown
-      // Check if err is an instance of Error to access message safely
-      const errorMessage = err instanceof Error ? err.message : "Failed to log in with Google.";
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to log in with Google."
       setError(errorMessage)
       setIsLoading(false)
     }
@@ -59,7 +60,7 @@ export default function LoginPage() {
           <Button 
             variant="outline" 
             type="button" 
-            className="w-full" 
+            className="w-full mb-2" 
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
@@ -71,6 +72,32 @@ export default function LoginPage() {
             </svg>
             {isLoading ? "Logging in..." : "Log in with Google"}
           </Button>
+
+          <Separator className="my-4" />
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    className="w-full bg-gray-300 hover:bg-gray-300 text-gray-600 cursor-not-allowed opacity-70" 
+                    disabled={true}
+                  >
+                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                    </svg>
+                    Twitch Login
+                    <Info size={16} className="ml-2" />
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>Twitch login is temporarily disabled. Please use Google authentication instead.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardContent>
         <CardFooter className="flex justify-center">
           <div className="text-center text-sm">

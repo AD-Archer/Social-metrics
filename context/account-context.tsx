@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useAuth } from "./auth-context"
 
 // Define the shape of a connected account
 export type SocialAccount = {
@@ -88,6 +89,7 @@ const initialAccounts: SocialAccount[] = [
 
 // Create the provider component
 export function AccountProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth(); // Removed isLinkedWithProvider as it's no longer in AuthContext
   // Initialize state from localStorage if available, otherwise use initialAccounts
   const [accounts, setAccounts] = useState<SocialAccount[]>(() => {
     if (typeof window !== "undefined") {

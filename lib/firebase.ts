@@ -1,4 +1,8 @@
-// Import the functions you need from the SDKs you need
+/**
+ * Firebase configuration and initialization module.
+ * Sets up Firebase services (Authentication, Firestore) used throughout the application.
+ * Exports initialized instances for use in other modules.
+ */
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";

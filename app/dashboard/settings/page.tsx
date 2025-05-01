@@ -13,13 +13,12 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-// Removed useAccounts import
 import { useSettingsStore } from "@/store/settings-store";
 
 // Import the child components
 import { ProfileSettings } from "./components/profile-settings";
 import { ConnectionSettings } from "./components/connection-settings";
-
+import { AccountSettings } from "./components/account-settings";
 
 export type SocialPlatform = 'youtube';
 
@@ -58,15 +57,11 @@ export default function SettingsPage() {
     setShowHelpComponent,
   } = useSettingsStore();
 
-  // Removed useAccounts hook call
-
-  // Removed hasPasswordProvider calculation
-
   // Effect to set active tab based on URL hash on initial load
   useEffect(() => {
     const hash = window.location.hash.substring(1);
-    // Removed "account" from valid tabs
-    if (hash && ["profile", "connections"].includes(hash)) {
+    // Now include "account" in valid tabs
+    if (hash && ["profile", "account", "connections"].includes(hash)) {
       setActiveTab(hash);
     } else {
       setActiveTab("profile");
@@ -108,8 +103,6 @@ export default function SettingsPage() {
     await saveProfile(user, profileData, toast);
   };
 
-  // Removed handleSavePasswordSubmit function
-
   // YouTube RSS URL save handler (calls store action)
   const handleSaveYoutubeRssUrlClick = async () => {
     if (!user) return;
@@ -120,8 +113,6 @@ export default function SettingsPage() {
   const handleRssUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setYoutubeRssUrlInput(e.target.value);
   };
-
-  // Removed handleToggleConnectionClick function
 
   // Handler for changing tabs
   const handleTabChange = (value: string) => {
@@ -148,7 +139,7 @@ export default function SettingsPage() {
       >
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          {/* Removed Account TabsTrigger */}
+          <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="connections">Connections</TabsTrigger>
         </TabsList>
 
@@ -161,13 +152,14 @@ export default function SettingsPage() {
           />
         </TabsContent>
 
-        {/* Removed Account TabsContent */}
+        <TabsContent value="account" className="space-y-4">
+          <AccountSettings />
+        </TabsContent>
 
         <TabsContent value="connections" className="space-y-4">
           <ConnectionSettings
             connectionSettings={settings.connections}
             isLoading={isLoading}
-            // Removed accounts and handleToggleConnection props
             youtubeRssUrlInput={youtubeRssUrlInput}
             handleRssUrlChange={handleRssUrlInputChange}
             handleSaveYoutubeRssUrl={handleSaveYoutubeRssUrlClick}
