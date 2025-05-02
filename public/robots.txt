@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /dashboard
+Disallow: /dashboard/youtube
+Disallow: /dashboard/twitch
+Disallow: /dashboard/settings
+
+Sitemap: https://socialmetrics.adarcher.app/sitemap.xml
