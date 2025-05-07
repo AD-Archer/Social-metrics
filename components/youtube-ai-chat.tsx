@@ -1,28 +1,33 @@
 /**
  * YouTube AI Chat component.
  * Provides an interface for users to interact with an AI assistant
- * regarding their YouTube channel data and performance.
+ * regarding their YouTube channel data, performance, and content ideas.
  * Manages chat state locally, including messages, input, loading, and errors.
- * Communicates with the `/api/youtube/ai/chat` endpoint, sending conversation history
- * and a summary of current analytics data.
+ * Communicates with the `/api/youtube/ai/chat` endpoint, sending conversation history,
+ * a summary of current analytics data, and optionally, selected Wikipedia topics for video ideas.
  * Renders AI responses using Markdown.
  * Fetches a custom error message from an external API on failure.
  * The component uses a fixed height and internal scrolling for the chat area.
  */
-import { useState, useRef, useEffect, useMemo } from 'react'; // Added useMemo
+import { useState, useRef, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, Send, Loader2, AlertTriangle } from 'lucide-react';
+import { Bot, Send, Loader2, AlertTriangle, Info } from 'lucide-react'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-// Import YoutubeState type along with others
 import { useYoutubeStore, type RssFeedItemWithStats, type YoutubeState } from '@/store/youtube-store'; 
-// Import Zustand types for explicit hook typing
 import { type UseBoundStore, type StoreApi } from 'zustand';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 
 interface Message {
   id: string;
@@ -30,50 +35,50 @@ interface Message {
   content: string;
 }
 
-// Define type for the accumulator in analytics summary
 interface AnalyticsAccumulator {
   views: number;
   likes: number;
   comments: number;
 }
 
-// Explicitly type the store hook
+interface YoutubeAIChatProps {
+  selectedWikipediaTopics?: string[]; // New prop for Wikipedia topics
+}
+
 const useTypedYoutubeStore: UseBoundStore<StoreApi<YoutubeState>> = useYoutubeStore;
 
-export function YoutubeAIChat() {
+export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) { // Destructure new prop
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Use the explicitly typed hook - access full state first
   const fullState = useTypedYoutubeStore();
   const { feedItems, trendData } = fullState;
 
-  // Memoize analytics summary to avoid recalculating on every render
   const analyticsSummary = useMemo(() => {
-    // Use the defined type for the accumulator and initial value
     const totalStats = feedItems.reduce<AnalyticsAccumulator>(
-      // Explicitly type accumulator and item parameters
       (acc: AnalyticsAccumulator, item: RssFeedItemWithStats) => {
-        // Ensure properties are treated as numbers, defaulting to 0 if undefined
         acc.views += item.views ?? 0;
         acc.likes += item.likes ?? 0;
         acc.comments += item.comments ?? 0;
         return acc;
       },
-      { views: 0, likes: 0, comments: 0 } // Initial value matching the type
+      { views: 0, likes: 0, comments: 0 }
     );
     const lastUpdated = trendData?.lastUpdated 
       ? new Date(trendData.lastUpdated).toLocaleString()
       : 'N/A';
       
-    // totalStats properties are now guaranteed to be numbers
-    return `Current dashboard state: ${feedItems.length} videos loaded. Totals - Views: ${totalStats.views.toLocaleString()}, Likes: ${totalStats.likes.toLocaleString()}, Comments: ${totalStats.comments.toLocaleString()}. Trend data last updated: ${lastUpdated}.`;
-  }, [feedItems, trendData]);
+    let summary = `Current YouTube dashboard state: ${feedItems.length} videos loaded. Totals - Views: ${totalStats.views.toLocaleString()}, Likes: ${totalStats.likes.toLocaleString()}, Comments: ${totalStats.comments.toLocaleString()}. Trend data last updated: ${lastUpdated}.`;
 
-  // Auto-scroll to bottom when new messages are added
+    if (selectedWikipediaTopics && selectedWikipediaTopics.length > 0) {
+      summary += `\n\nConsider these trending Wikipedia topics for video ideas: ${selectedWikipediaTopics.join(', ')}.`;
+    }
+    return summary;
+  }, [feedItems, trendData, selectedWikipediaTopics]); // Add selectedWikipediaTopics to dependency array
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -82,6 +87,27 @@ export function YoutubeAIChat() {
       });
     }
   }, [messages]);
+
+  // Effect to send an initial message if Wikipedia topics are present
+  useEffect(() => {
+    if (selectedWikipediaTopics && selectedWikipediaTopics.length > 0 && messages.length === 0) {
+      const initialSystemMessage = `Based on these trending Wikipedia topics: ${selectedWikipediaTopics.join(', ')}, what kind of YouTube videos could I create?`;
+      // Simulate a user message to kickstart the conversation with context
+      // This avoids sending an actual API call without user interaction but pre-fills the input
+      // Or, send an initial "system" type message if the API supports it,
+      // for now, we can add it to the first user message or as a placeholder.
+      // Let's add a non-API-calling message to the chat to inform the user.
+      setMessages([
+        {
+          id: Date.now().toString() + '-system-info',
+          role: 'assistant', // Or a new role like 'system' if you customize rendering
+          content: `I can help you brainstorm video ideas based on these trending topics: **${selectedWikipediaTopics.join(', ')}**. Ask me for suggestions!`
+        }
+      ]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWikipediaTopics]); // Run only when topics change, and messages are empty
+
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInput(event.target.value);
@@ -104,6 +130,14 @@ export function YoutubeAIChat() {
     setIsLoading(true);
     setError(null);
 
+    // Prepare context for the AI
+    let contextForAI = analyticsSummary; // Already includes Wikipedia topics if present
+    
+    // If this is the first user message AND wikipedia topics were provided,
+    // we can make the user's first message more explicit about those topics.
+    // However, the analyticsSummary already includes this.
+    // The initial message added via useEffect serves as a good prompt.
+
     try {
       const response = await fetch('/api/youtube/ai/chat', {
         method: 'POST',
@@ -113,7 +147,7 @@ export function YoutubeAIChat() {
         body: JSON.stringify({ 
           message: userMessage.content,
           history: currentHistory,
-          analyticsContext: analyticsSummary // Include the analytics summary
+          analyticsContext: contextForAI // Send the potentially augmented context
         }),
       });
 
@@ -156,11 +190,31 @@ export function YoutubeAIChat() {
   return (
     <Card className="h-[600px] flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
-          AI Assistant
-        </CardTitle>
-        <CardDescription>Ask questions about your YouTube performance or get content ideas.</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              AI Assistant
+            </CardTitle>
+            <CardDescription>Ask about your YouTube data or get content ideas.</CardDescription>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-xs">
+                <p className="text-sm">
+                  I can help analyze your YouTube performance, suggest video titles,
+                  brainstorm content, and more. If trending Wikipedia topics are selected
+                  on the dashboard, I'll also use those to help you generate video ideas!
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden"> {/* Added overflow-hidden */}
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>

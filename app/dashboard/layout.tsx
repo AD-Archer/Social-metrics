@@ -80,7 +80,7 @@ export default function DashboardLayout({
   const navigation = [
     { name: "Overview", href: "/dashboard", icon: Home },
     { name: "YouTube", href: "/dashboard/youtube", icon: Youtube },
-    { name: "Twitch", href: "/dashboard/twitch", icon: Twitch }, 
+    { name: "Trending Topics", href: "/dashboard/trending", icon: User }, 
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ]
 

@@ -1,13 +1,13 @@
 /**
- * Dashboard main page displaying YouTube RSS feed as the primary content.
- * Fetches recent YouTube videos from the user's configured RSS feed and displays them
- * on the main dashboard. Uses the RSS feed API with the user's RSS URL.
+ * Dashboard main page displaying YouTube RSS feed and Wikipedia trending articles.
+ * Fetches recent YouTube videos from the user's configured RSS feed and displays them.
+ * Also fetches and displays trending Wikipedia articles.
  */
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Youtube, ExternalLink, Settings, AlertCircle } from "lucide-react"
+import { Youtube, ExternalLink, Settings, AlertCircle, BookOpen } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -18,6 +18,7 @@ import { auth, db } from "@/lib/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { useAccounts } from "@/context/account-context"
 import { useToast } from "@/components/ui/use-toast"
+import { YoutubeAIChat } from "@/components/youtube-ai-chat"; // Import the YoutubeAIChat component
 
 // Define the structure of a YouTube feed item from the RSS API
 interface RssFeedItem {
@@ -28,6 +29,13 @@ interface RssFeedItem {
   guid?: string;
 }
 
+// Define the structure for a Wikipedia trending article
+interface WikipediaTrendingItem {
+  article: string;
+  views: number;
+  rank: number;
+}
+
 export default function DashboardPage() {
   const { accounts } = useAccounts()
   const [user, loadingAuth] = useAuthState(auth)
@@ -36,6 +44,12 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [rssConfigured, setRssConfigured] = useState(false)
+  
+  // State for Wikipedia Trending
+  const [trendingWikipediaArticles, setTrendingWikipediaArticles] = useState<WikipediaTrendingItem[]>([])
+  const [isLoadingWikipedia, setIsLoadingWikipedia] = useState(true)
+  const [wikipediaError, setWikipediaError] = useState<string | null>(null)
+  
   const { toast } = useToast()
   
   const youtubeAccount = accounts.find((a) => a.platform === "youtube" && a.connected)
@@ -118,6 +132,44 @@ export default function DashboardPage() {
       fetchRss()
     }
   }, [user, loadingAuth, toast])
+
+  // Fetch Wikipedia trending articles
+  useEffect(() => {
+    const fetchWikipediaTrends = async () => {
+      setIsLoadingWikipedia(true)
+      setWikipediaError(null)
+      try {
+        // Get yesterday's date for the API call
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        const year = yesterday.getFullYear()
+        const month = (yesterday.getMonth() + 1).toString().padStart(2, '0')
+        const day = yesterday.getDate().toString().padStart(2, '0')
+
+        const response = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${year}/${month}/${day}`)
+        
+        if (!response.ok) {
+          throw new Error(`Wikimedia API error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        if (data.items && data.items.length > 0 && data.items[0].articles) {
+          // Limit to top 10 articles for the dashboard
+          setTrendingWikipediaArticles(data.items[0].articles.slice(0, 10))
+        } else {
+          setTrendingWikipediaArticles([])
+        }
+      } catch (err: unknown) {
+        console.error("Failed to fetch Wikipedia trending articles:", err);
+        setWikipediaError(err instanceof Error ? err.message : "An unknown error occurred while fetching Wikipedia trends");
+      } finally {
+        setIsLoadingWikipedia(false)
+      }
+    }
+    
+    fetchWikipediaTrends()
+  }, [])
 
   // Helper function to format date strings
   const formatDate = (dateString?: string): string => {
@@ -221,9 +273,54 @@ export default function DashboardPage() {
     )
   }
 
+  // Render Wikipedia trending articles
+  const renderWikipediaTrends = () => {
+    if (isLoadingWikipedia) {
+      return (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full" />
+          ))}
+        </div>
+      )
+    }
+    
+    if (wikipediaError) {
+      return (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error fetching Wikipedia trends</AlertTitle>
+          <AlertDescription>{wikipediaError}</AlertDescription>
+        </Alert>
+      )
+    }
+    
+    if (trendingWikipediaArticles.length === 0) {
+      return <p className="text-sm text-muted-foreground">No trending articles found for yesterday.</p>
+    }
+    
+    return (
+      <ul className="space-y-2">
+        {trendingWikipediaArticles.map((item) => (
+          <li key={item.article} className="text-sm">
+            <a
+              href={`https://en.wikipedia.org/wiki/${item.article.replace(/ /g, '_')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline text-primary flex items-center justify-between group"
+            >
+              <span>{item.rank}. {item.article.replace(/_/g, ' ')}</span>
+              <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
   // Add gradient background and center content
   return (
-    <div className="w-full flex flex-col items-center px-2">
+    <div className="w-full flex flex-col items-center px-2 pb-10">
       {/* Header */}
       <div className="mb-8 text-center animate-fade-in w-full max-w-3xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-primary">Social Dashboard</h1>
@@ -265,8 +362,15 @@ export default function DashboardPage() {
         </Card>
       </div>
       
+      {/* YouTube AI Chat Component */}
+      {youtubeAccount && rssConfigured && (
+        <div className="w-full max-w-4xl animate-fade-in mb-6">
+          <YoutubeAIChat />
+        </div>
+      )}
+
       {/* RSS Feed Display */}
-      <div className="w-full max-w-4xl animate-fade-in">
+      <div className="w-full max-w-4xl animate-fade-in mb-6">
         <Card className="glass-card">
           <CardHeader>
             <CardTitle>Recent Videos</CardTitle>
@@ -276,6 +380,27 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {renderFeed()}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Wikipedia Trending Card */}
+      <div className="w-full max-w-4xl animate-fade-in">
+        <Card className="glass-card hover:scale-[1.01] transition-transform duration-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              Wikipedia Daily Trends
+            </CardTitle>
+            <CardDescription>
+              Top 10 trending articles on English Wikipedia from yesterday.
+              <Link href="/dashboard/wiki" className="ml-2 text-sm text-blue-500 hover:underline">
+                View more
+              </Link>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {renderWikipediaTrends()}
           </CardContent>
         </Card>
       </div>
