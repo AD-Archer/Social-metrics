@@ -27,7 +27,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
+import { useAiIdeasStore, allStaticIdeas } from '@/store/ai-ideas-store';
+import { useCallback, useState as useReactState } from 'react';
 
 interface Message {
   id: string;
@@ -53,6 +54,10 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [infoOpen, setInfoOpen] = useReactState(false); // For click-to-open info
+  const aiIdeasStore = useAiIdeasStore();
+  const { sessionIdeas, randomizeSessionIdeas } = aiIdeasStore;
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   const fullState = useTypedYoutubeStore();
   const { feedItems, trendData } = fullState;
@@ -108,6 +113,24 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWikipediaTopics]); // Run only when topics change, and messages are empty
 
+  // Update dynamic trending idea if Wikipedia topics change
+  useEffect(() => {
+    let trendingIdea;
+    if (selectedWikipediaTopics && selectedWikipediaTopics.length > 4) {
+      trendingIdea = {
+        id: 'trending',
+        text: `Hey, I notice that '${selectedWikipediaTopics[4]}' is trending. How can I make a YouTube video on it?`,
+        dynamic: true,
+      };
+    }
+    randomizeSessionIdeas(allStaticIdeas, trendingIdea);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWikipediaTopics]);
+
+  // Prefill input with idea text
+  const handleIdeaClick = useCallback((ideaText: string) => {
+    setInput(ideaText);
+  }, []);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInput(event.target.value);
@@ -116,6 +139,7 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
   const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     if (!input.trim() || isLoading) return;
+    setShowSuggestions(false);
 
     const userMessage: Message = {
       id: Date.now().toString() + '-user',
@@ -199,9 +223,9 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
             <CardDescription>Ask about your YouTube data or get content ideas.</CardDescription>
           </div>
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip open={infoOpen} onOpenChange={setInfoOpen}>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setInfoOpen((v) => !v)}>
                   <Info className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </TooltipTrigger>
@@ -215,6 +239,22 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
             </Tooltip>
           </TooltipProvider>
         </div>
+        {/* AI Suggestions Row */}
+        {showSuggestions && (
+          <div className="mt-4 flex flex-wrap gap-2 items-center">
+            {sessionIdeas.map((idea) => (
+              <Button
+                key={idea.id}
+                variant="outline"
+                size="sm"
+                className="text-xs px-2 py-1"
+                onClick={() => handleIdeaClick(idea.text)}
+              >
+                {idea.text}
+              </Button>
+            ))}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden"> {/* Added overflow-hidden */}
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>

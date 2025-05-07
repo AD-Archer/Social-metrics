@@ -80,7 +80,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { YoutubePageHeader } from "./components/YoutubePageHeader";
 import { YoutubeVideoDialog } from "./components/YoutubeVideoDialog";
-import { YoutubeAIChat } from "@/components/youtube-ai-chat"; 
+
 
 interface SelectedVideoType {
   title?: string;
@@ -128,6 +128,20 @@ export default function YoutubePage() {
   const [trendsTab, setTrendsTab] = useState<'month' | 'year' | 'conversion'>('month');
 
   const youtubeAccount = accounts.find((a) => a.platform === "youtube" && a.connected);
+
+  // Extract channel ID from the saved RSS feed URL (user-provided)
+
+  
+  const channelUrl = "https://studio.youtube.com/channel/";
+
+  // Channel stats summary (from account context)
+  const channelStats = youtubeAccount
+    ? [
+        { label: "Subscribers", value: youtubeAccount.followers?.toLocaleString() ?? "-" },
+        { label: "Total Views", value: youtubeAccount.views?.toLocaleString() ?? "-" },
+        { label: "Engagement", value: youtubeAccount.engagement != null ? `${youtubeAccount.engagement}%` : "-" },
+      ]
+    : [];
 
   useEffect(() => {
     if (!loadingAuth && user) {
@@ -741,8 +755,32 @@ export default function YoutubePage() {
   return (
     <div className="space-y-6">
       <YoutubePageHeader youtubeAccount={youtubeAccount} />
-      <YoutubeAIChat />
 
+      {/* Channel Stats Summary */}
+      {youtubeAccount && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/40 rounded-lg p-4 border border-border">
+          <div className="flex items-center gap-6 flex-wrap">
+            {channelStats.map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center min-w-[100px]">
+                <span className="text-xs text-muted-foreground">{stat.label}</span>
+                <span className="text-lg font-semibold">{stat.value}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 mt-4 md:mt-0">
+            <a
+              href={channelUrl || "https://youtube.com"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition text-sm font-medium shadow"
+            >
+              View on YouTube
+              <ExternalLink className="h-4 w-4" />
+            </a>
+            <span className="text-xs text-muted-foreground ml-2">For more analytics, visit your YouTube channel page.</span>
+          </div>
+        </div>
+      )}
 
       {renderContent()}
           {/* AI Chat Section */}

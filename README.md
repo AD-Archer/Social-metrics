@@ -3,7 +3,7 @@
 ## Project Overview
 **Industry:** Technology  
 **Developer:** ad-archer  
-**Completion Date:** April 28, 2025  
+**Completion Date:** May 7, 2025  
 **GitHub Repository:** https://github.com/ad-archer/social-dash.git  
 **Trello:** https://trello.com/invite/b/68068f8083d850bef9245db5/ATTIa2848198df96ca5274eff2d228735452487E9D2E/social-dash
 **Live Demo:**  https://socialmetrics.adarcher.app/
@@ -125,6 +125,45 @@ Make sure to set all the environment variables mentioned in the Firebase Setup s
 - Add data caching and background refresh
 - Allow users to customize dashboard widgets
 - Implement role-based access for team accounts
+
+---
+
+## How It Works
+1. **Sign in with Google** to connect your YouTube channel.
+2. **Configure your YouTube RSS feed** in the settings for real-time video and analytics syncing.
+3. **Explore your dashboard:**
+   - See your latest videos and channel stats.
+   - Chat with the AI assistant for ideas and growth tips.
+   - Discover trending Wikipedia topics for timely content inspiration.
+4. **Customize your experience** via the settings page.
+
+---
+
+## AI Chat Assistant Details
+The AI assistant is a core feature of Social Dashboard, designed to help creators and marketers get actionable insights and content ideas quickly. It can:
+- Analyze your channel’s analytics and suggest improvements
+- Recommend trending video topics based on Wikipedia trends
+- Answer questions about YouTube growth, upload frequency, and best practices
+- Provide tips on thumbnails, titles, and engagement
+- Offer a clean, focused chat UI that adapts as you interact
+
+**How it works:**
+- The assistant uses OpenAI GPT-4o-mini for responses
+- Trending Wikipedia topics are fetched daily and used to generate relevant suggestions
+- The chat UI displays 3 random, context-aware suggestions on load (including a trending topic if available)
+- Suggestions disappear after you start chatting for a distraction-free experience
+
+---
+
+## Security & Privacy
+- All authentication is handled via Google OAuth through Firebase
+- No sensitive data is stored outside your account or shared with third parties
+- Firestore security rules are enforced for all user data
+
+---
+
+## Contact & Support
+For questions, issues, or feature requests, please open an issue on [GitHub](https://github.com/ad-archer/social-dash/issues) or contact the developer via the repository.
 
 ## Visual Overview
 
