@@ -46,27 +46,16 @@ export const useTrendingStore = create<TrendingState>((set, get) => ({
   fetchTrendingArticles: async (date: Date) => {
     set({ isLoading: true, error: null });
     try {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const day = date.getDate().toString().padStart(2, "0");
-
       const response = await fetch(
-        `https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${year}/${month}/${day}`
+        `/api/wikipedia/trending?date=${date.toISOString().split('T')[0]}`
       );
 
       if (!response.ok) {
-        throw new Error(`Wikimedia API error! status: ${response.status}`);
+        throw new Error(`API error! status: ${response.status}`);
       }
 
       const data = await response.json();
-
-      if (data.items && data.items.length > 0 && data.items[0].articles) {
-        const rawArticles = data.items[0].articles as WikipediaTrendingItem[];
-        const filteredArticles = filterArticles(rawArticles);
-        set({ trendingArticles: filteredArticles.slice(0, 50), isLoading: false });
-      } else {
-        set({ trendingArticles: [], isLoading: false });
-      }
+      set({ trendingArticles: data, isLoading: false });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       console.error("Failed to fetch Wikipedia trending articles:", err);

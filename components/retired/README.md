@@ -1,1 +1,0 @@
-I decided to narrow my project scope, with that I decided having this many social media sites was not needed.

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useAiIdeasStore, allStaticIdeas } from '@/store/ai-ideas-store';
 import { useCallback, useState as useReactState } from 'react';
+import { useAiChatBridgeStore } from '@/store/ai-chat-bridge-store';
 
 interface Message {
   id: string;
@@ -96,7 +97,6 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
   // Effect to send an initial message if Wikipedia topics are present
   useEffect(() => {
     if (selectedWikipediaTopics && selectedWikipediaTopics.length > 0 && messages.length === 0) {
-      const initialSystemMessage = `Based on these trending Wikipedia topics: ${selectedWikipediaTopics.join(', ')}, what kind of YouTube videos could I create?`;
       // Simulate a user message to kickstart the conversation with context
       // This avoids sending an actual API call without user interaction but pre-fills the input
       // Or, send an initial "system" type message if the API supports it,
@@ -155,7 +155,7 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
     setError(null);
 
     // Prepare context for the AI
-    let contextForAI = analyticsSummary; // Already includes Wikipedia topics if present
+    const contextForAI = analyticsSummary; // Already includes Wikipedia topics if present
     
     // If this is the first user message AND wikipedia topics were provided,
     // we can make the user's first message more explicit about those topics.
@@ -194,13 +194,13 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
       // Attempt to fetch the custom error message
       try {
         const errorResponse = await fetch('https://naas.isalman.dev/no');
-        if (errorResponse.ok) {
-          const errorData = await errorResponse.json();
-          setError(errorData.reason || "An unexpected error occurred.");
-        } else {
-          // Fallback if the custom error API fails
-          setError("Failed to get response from AI, and couldn't fetch a witty error message either.");
-        }
+          if (errorResponse.ok) {
+            const errorData = await errorResponse.json();
+            setError(errorData.reason || "An unexpected error occurred.");
+          } else {
+            // Fallback if the custom error API fails
+            setError("Failed to get response from AI, and couldn&apos;t fetch a witty error message either.");
+          }
       } catch (fetchError) {
         console.error("Failed to fetch custom error message:", fetchError);
         // Fallback if the fetch itself fails
@@ -210,6 +210,21 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
       setIsLoading(false);
     }
   };
+
+  const aiChatBridge = useAiChatBridgeStore();
+
+  // Listen for external AI message requests
+  useEffect(() => {
+    if (aiChatBridge.pendingMessage) {
+      // Simulate user input and submit
+      setInput(aiChatBridge.pendingMessage);
+      setShowSuggestions(false);
+      // Submit as if user pressed enter
+      handleSubmit();
+      aiChatBridge.clearPendingMessage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiChatBridge.pendingMessage]);
 
   return (
     <Card className="h-[600px] flex flex-col">
@@ -233,7 +248,7 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
                 <p className="text-sm">
                   I can help analyze your YouTube performance, suggest video titles,
                   brainstorm content, and more. If trending Wikipedia topics are selected
-                  on the dashboard, I'll also use those to help you generate video ideas!
+                  on the dashboard, I&apos;ll also use those to help you generate video ideas!
                 </p>
               </TooltipContent>
             </Tooltip>

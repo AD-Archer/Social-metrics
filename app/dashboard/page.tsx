@@ -11,23 +11,13 @@ import { Youtube, ExternalLink, Settings, AlertCircle, BookOpen, Info } from "lu
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { useAccounts } from "@/context/account-context"
 import { useToast } from "@/components/ui/use-toast"
-import { YoutubeAIChat } from "@/components/youtube-ai-chat"; // Import the YoutubeAIChat component
-
-// Define the structure of a YouTube feed item from the RSS API
-interface RssFeedItem {
-  title?: string;
-  link?: string;
-  pubDate?: string;
-  isoDate?: string;
-  guid?: string;
-}
+import { YoutubeAIChat } from "@/components/ai-chat"
 
 // Define the structure for a Wikipedia trending article
 interface WikipediaTrendingItem {
@@ -40,10 +30,8 @@ export default function DashboardPage() {
   const { accounts } = useAccounts()
   const [user, loadingAuth] = useAuthState(auth)
   const [mounted, setMounted] = useState(false)
-  const [feedItems, setFeedItems] = useState<RssFeedItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [rssConfigured, setRssConfigured] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   // State for Wikipedia Trending
   const [trendingWikipediaArticles, setTrendingWikipediaArticles] = useState<WikipediaTrendingItem[]>([])
@@ -62,7 +50,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loadingAuth && user) {
       const fetchRss = async () => {
-        setIsLoading(true)
         setError(null)
         try {
           // First check if the user has configured an RSS URL
@@ -103,23 +90,19 @@ export default function DashboardPage() {
                 const errorData = await response.json().catch(() => ({}))
                 throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
               }
-              const data = await response.json()
-              const sortedItems = (data.items || []).sort((a: RssFeedItem, b: RssFeedItem) => {
-                const dateA = a.isoDate ? new Date(a.isoDate).getTime() : 0
-                const dateB = b.isoDate ? new Date(b.isoDate).getTime() : 0
-                return dateB - dateA
-              })
-              setFeedItems(sortedItems)
+              await response.json() // We don't need to store the items anymore
             } else {
               setRssConfigured(false)
-              setFeedItems([])
             }
           }
         } catch (err: unknown) {
           console.error("Failed to fetch YouTube RSS feed:", err);
           setError(err instanceof Error ? err.message : "An unknown error occurred while fetching the feed");
-        } finally {
-          setIsLoading(false)
+          toast({
+            title: "Error",
+            description: err instanceof Error ? err.message : "An unknown error occurred while fetching the feed",
+            variant: "destructive"
+          })
         }
       }
       fetchRss()
@@ -163,108 +146,6 @@ export default function DashboardPage() {
     
     fetchWikipediaTrends()
   }, [])
-
-  // Helper function to format date strings
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return 'N/A'
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      })
-    } catch {
-      return dateString
-    }
-  }
-
-  // Render loading state
-  const renderLoading = () => (
-    <div className="space-y-4 w-full">
-      {[...Array(5)].map((_, i) => (
-        <Skeleton key={i} className="h-12 w-full" />
-      ))}
-    </div>
-  )
-  
-  // Render error state
-  const renderError = () => (
-    <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Error fetching videos</AlertTitle>
-      <AlertDescription>
-        {error}
-        <div className="mt-2">
-          <Link href="/dashboard/settings?tab=connections" className="underline">
-            Check your settings
-          </Link>
-        </div>
-      </AlertDescription>
-    </Alert>
-  )
-  
-  // Render the feed content
-  const renderFeed = () => {
-    if (isLoading) return renderLoading()
-    if (error) return renderError()
-    
-    if (!rssConfigured) {
-      return (
-        <div className="text-center py-6">
-          <p className="text-muted-foreground mb-4">
-            You haven&apos;t configured your YouTube RSS feed URL yet.
-          </p>
-          <Link href="/dashboard/settings?tab=connections">
-            <Button>Configure YouTube RSS Feed</Button>
-          </Link>
-        </div>
-      )
-    }
-    
-    if (feedItems.length === 0) {
-      return (
-        <div className="text-center py-6">
-          <p className="text-muted-foreground">No videos found in your RSS feed.</p>
-        </div>
-      )
-    }
-    
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead className="text-right">Published</TableHead>
-            <TableHead className="w-[50px] text-right"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {feedItems.map((item) => (
-            <TableRow key={item.guid || item.link} className="group hover:bg-muted/50">
-              <TableCell className="font-medium">{item.title || "No Title"}</TableCell>
-              <TableCell className="text-right text-muted-foreground">
-                {formatDate(item.pubDate || item.isoDate)}
-              </TableCell>
-              <TableCell className="text-right">
-                {item.link && (
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Watch on YouTube"
-                    className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="sr-only">View video</span>
-                  </a>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    )
-  }
 
   // Render Wikipedia trending articles
   const renderWikipediaTrends = () => {
@@ -367,6 +248,13 @@ export default function DashboardPage() {
                     <span className="inline-flex items-center gap-1 text-yellow-700 dark:text-yellow-400"><span className="h-2 w-2 rounded-full bg-yellow-400 inline-block" />RSS Feed Not Configured</span>
                   )}
                 </p>
+                {error && (
+                  <Alert variant="destructive" className="mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>RSS Feed Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
               </div>
               <Link href="/dashboard/settings?tab=connections">
                 <Button variant="outline" size="sm" className="gap-2 shadow">

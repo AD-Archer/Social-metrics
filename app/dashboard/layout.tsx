@@ -12,7 +12,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, X, Twitch } from "lucide-react"
+import { Home, LogOut, Menu, Settings, User, Youtube, ChevronDown, X } from "lucide-react"
 import Head from 'next/head'
 
 import { Button } from "@/components/ui/button"
