@@ -18,7 +18,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "SocialMetrics - Social Media Analytics Dashboard for Streamers",
   description: "Track and analyze your social media performance across multiple platforms.",
-  keywords: ["Social Media", "Analytics", "Dashboard", "YouTube", "Instagram", "Marketing", "Twitch", "Twitter"],
+  keywords: ["Social Media", "Analytics", "Dashboard", "YouTube", "Instagram", "Marketing", "Twitch", "Twitter", "Antonio Archer"],
   authors: [{ name: "Antonio Archer", url: "https://www.antonioarcher.com" }],
   viewport: "width=device-width, initial-scale=1",
   openGraph: {

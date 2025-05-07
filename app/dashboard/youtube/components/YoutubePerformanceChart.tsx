@@ -4,6 +4,7 @@
  * Visualizes views, likes, and comments for recent videos.
  * Uses Recharts library for chart rendering.
  */
+import React, { useState, useMemo } from "react"; // Added missing React hooks
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -18,13 +19,18 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YoutubeSummaryCards } from './YoutubeSummaryCards'; // Import summary cards
 import { RssFeedItemWithStats } from '@/store/youtube-store'; // Import the type
+import { Calendar } from "@/components/ui/calendar"; // Replaced DatePicker with Calendar
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // Adjusted import
+import { DateRange } from "react-day-picker"; // Import DateRange type
 
-// Define chart data type locally or import if shared
+// Extended ChartDataItem type to include date and platform properties
 interface ChartDataItem {
   name: string;
   views: number;
   likes: number;
   comments: number;
+  date: string; // Added date property
+  platform: string; // Added platform property
 }
 
 // Define a type for common chart margin props
@@ -55,6 +61,17 @@ export function YoutubePerformanceChart({
   commonChartProps, commonTooltipProps, commonXAxisProps, commonYAxisProps, COLORS,
   feedItems, formatNumber, totalStats
 }: YoutubePerformanceChartProps) {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [platformFilters, setPlatformFilters] = useState(['YouTube']);
+
+  const filteredChartData = useMemo(() => {
+    return chartData.filter((item) => {
+      const withinDateRange = !dateRange?.from || !dateRange?.to ||
+        (new Date(item.date) >= new Date(dateRange.from) && new Date(dateRange.to));
+      const matchesPlatform = platformFilters.includes(item.platform);
+      return withinDateRange && matchesPlatform;
+    });
+  }, [chartData, dateRange, platformFilters]);
 
   if (chartData.length === 0) {
     return null; // Don't render the card if there's no data
@@ -96,10 +113,25 @@ export function YoutubePerformanceChart({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex flex-wrap gap-4">
+          <Calendar
+            selected={dateRange}
+            onSelect={(range: DateRange | undefined) => setDateRange(range)}
+            aria-label="Select Date Range"
+          />
+          <ToggleGroup
+            type="multiple" // Added required 'type' property
+            value={platformFilters}
+            onValueChange={setPlatformFilters}
+          >
+            <ToggleGroupItem value="YouTube">YouTube</ToggleGroupItem>
+            <ToggleGroupItem value="Twitch">Twitch</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         <div className="h-[350px] pt-4">
           {chartType === 'bar' ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} {...commonChartProps}>
+              <BarChart data={filteredChartData} {...commonChartProps}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis {...commonXAxisProps} />
                 <YAxis {...commonYAxisProps} />
@@ -115,7 +147,7 @@ export function YoutubePerformanceChart({
             </ResponsiveContainer>
           ) : chartType === 'line' ? (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} {...commonChartProps}>
+              <LineChart data={filteredChartData} {...commonChartProps}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis {...commonXAxisProps} />
                 <YAxis {...commonYAxisProps} />
@@ -128,7 +160,7 @@ export function YoutubePerformanceChart({
             </ResponsiveContainer>
           ) : chartType === 'area' ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} {...commonChartProps}>
+              <AreaChart data={filteredChartData} {...commonChartProps}>
                 <defs>
                   <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.views} stopOpacity={0.8}/>
