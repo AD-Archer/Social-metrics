@@ -2,7 +2,7 @@
  * Connection settings component.
  * Manages connections to external services like YouTube, focusing on RSS feed
  * configuration (via `useSettingsStore`). It receives state and handlers as
- * props from the parent settings page. OAuth connection management has been removed.
+ * props from the parent settings page. Includes responsive design for mobile devices.
  */
 "use client";
 
@@ -48,8 +48,8 @@ export function ConnectionSettings({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* YouTube Section */}
-        <div className="space-y-4 p-4 border rounded-md">
-          <div className="flex justify-between items-center">
+        <div className="space-y-4 p-3 sm:p-4 border rounded-md">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div className="flex gap-2 items-center">
               <Youtube className="h-5 w-5 text-red-600" />
               <h3 className="text-lg font-medium">YouTube Integration</h3>
@@ -58,7 +58,7 @@ export function ConnectionSettings({
               variant="ghost"
               size="sm"
               onClick={() => setShowHelpComponent(!showHelpComponent)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 w-fit"
             >
               <HelpCircle className="h-4 w-4" />
               <span>{showHelpComponent ? "Hide Help" : "Show Help"}</span>
@@ -66,16 +66,27 @@ export function ConnectionSettings({
           </div>
 
           {/* YouTube RSS Feed Input */}
-          <div className="pt-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="pt-2 sm:pt-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <Label htmlFor="youtubeRssUrl" className="text-sm font-medium">YouTube RSS Feed URL</Label>
               {connectionSettings?.youtubeRssUrl && (
-                 <Badge variant={isSavedUrlInvalid ? "destructive" : "outline"}>
-                   {isSavedUrlInvalid ? "Invalid Format" : "Configured"}
-                 </Badge>
+                <Badge variant={isSavedUrlInvalid ? "destructive" : "outline"}>
+                  {isSavedUrlInvalid ? "Invalid Format" : "Configured"}
+                </Badge>
               )}
             </div>
-            <div className="flex items-center space-x-2 mb-2">
+
+            {/* Current URL display if present */}
+            {connectionSettings?.youtubeRssUrl && (
+              <div className="mb-2 text-sm text-muted-foreground">
+                <span className="font-medium">Current URL:</span>
+                <div className="mt-1 break-all bg-muted/40 p-2 rounded-sm">
+                  {connectionSettings.youtubeRssUrl}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-2 mb-2">
               <Input
                 id="youtubeRssUrl"
                 name="youtubeRssUrl"
@@ -83,12 +94,13 @@ export function ConnectionSettings({
                 placeholder="https://www.youtube.com/feeds/videos.xml?channel_id=YOUR_CHANNEL_ID"
                 value={youtubeRssUrlInput}
                 onChange={handleRssUrlChange}
-                className="flex-grow"
+                className="flex-grow w-full break-all text-ellipsis"
                 disabled={isLoading}
               />
               <Button
                 onClick={handleSaveYoutubeRssUrl}
                 disabled={isLoading || youtubeRssUrlInput === (connectionSettings?.youtubeRssUrl || "")}
+                className="whitespace-nowrap w-full sm:w-auto"
               >
                 {isLoading ? "Saving..." : "Save"}
               </Button>
@@ -99,16 +111,16 @@ export function ConnectionSettings({
               className={cn(
                 "overflow-hidden transition-all duration-500 ease-in-out",
                 shouldShowHelp
-                  ? "max-h-[1000px] opacity-100 mt-4"
+                  ? "max-h-[2000px] opacity-100 mt-4"
                   : "max-h-0 opacity-0"
               )}
             >
               {shouldShowHelp && (
-                 <YouTubeRssHelp currentUrl={connectionSettings?.youtubeRssUrl} />
+                <YouTubeRssHelp currentUrl={connectionSettings?.youtubeRssUrl} />
               )}
-            </div> {/* Closing tag for Help component Wrapper */}
-          </div> {/* Closing tag for YouTube RSS Feed Input section */}
-        </div> {/* Closing tag for YouTube Section */}
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

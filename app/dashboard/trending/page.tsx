@@ -3,6 +3,7 @@
  * Shows trending Wikipedia articles, lets users expand each for summary, image, facts, related topics, and pageview history.
  * Designed to help creators spot hot topics, brainstorm content, and identify unique video opportunities.
  * Uses Zustand for state, fetches extra data from Wikipedia APIs on demand.
+ * Enhanced for mobile responsiveness, ensuring text elements like titles and badges display correctly without clipping.
  */
 "use client"
 
@@ -71,16 +72,20 @@ export function WikiDashboardPage() {
   }, [fetchTrendingArticles, selectedDate]);
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(event.target.value)
+    const dateString = event.target.value; // Format: "YYYY-MM-DD"
+    const parts = dateString.split('-').map(Number);
+    // Construct date as local time to avoid timezone shifts from new Date("YYYY-MM-DD") which parses as UTC.
+    const newDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
     const today = new Date();
-    today.setHours(0,0,0,0); 
-    
+    today.setHours(0, 0, 0, 0);
+
     if (newDate >= today) {
-        const yesterday = new Date();
-        yesterday.setDate(today.getDate() - 1);
-        setSelectedDate(yesterday);
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      setSelectedDate(yesterday);
     } else {
-        setSelectedDate(newDate);
+      setSelectedDate(newDate);
     }
   };
 
@@ -175,24 +180,34 @@ export function WikiDashboardPage() {
             const d = details[item.article] || {}
             return (
               <li key={item.article} className="text-sm p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between group gap-2"> {/* Stack sections on mobile, row on sm+ */}
+                  {/* Article Info Section (Left/Top) */}
+                  <div className="flex items-center gap-2 w-full flex-grow min-w-0"> {/* Allow this section to grow and title to truncate */}
                     <Button variant="ghost" size="icon" onClick={() => handleExpand(item.article)} aria-label="Expand details">
                       {expanded[item.article] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
-                    <a href={`https://en.wikipedia.org/wiki/${item.article.replace(/ /g, "_")}`} target="_blank" rel="noopener noreferrer" className="inline-block">
-                      <span className="font-semibold text-primary hover:underline">
+                    <div className="flex-grow min-w-0"> {/* Wrapper for title and views/badges */}
+                      <a href={`https://en.wikipedia.org/wiki/${item.article.replace(/ /g, "_")}`} target="_blank" rel="noopener noreferrer" className="block truncate font-semibold text-primary hover:underline">
                         {item.rank}. {item.article.replace(/_/g, " ")}
-                      </span>
-                    </a>
-                    <p className="text-xs text-muted-foreground ml-2">{item.views.toLocaleString()} views</p>
-                    {d.isStub && !d.loading && <span className="ml-2 text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1"><Sparkles className="h-3 w-3" /> Content Gap</span>}
+                      </a>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground mt-0.5"> {/* Allow wrapping for views and badges */}
+                        <span>{item.views.toLocaleString()} views</span>
+                        {d.isStub && !d.loading && 
+                          <span className="whitespace-nowrap text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 flex-shrink-0" /> {/* Prevent icon from shrinking */}
+                            Content Gap
+                          </span>
+                        }
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(item.article.replace(/_/g, " "))}`, "_blank")} title="Search on Google">
+
+                  {/* Action Buttons Section (Right/Bottom) */}
+                  <div className="flex flex-wrap justify-start sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0"> {/* Buttons wrap, full width on mobile, auto on sm+ */}
+                    <Button variant="outline" size="sm" onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(item.article.replace(/_/g, " "))}`, "_blank")} title="Search on Google" className="flex-grow sm:flex-grow-0">
                       <Search className="h-3.5 w-3.5 mr-1" />Google
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => window.open(`https://en.wikipedia.org/wiki/${item.article.replace(/ /g, "_")}`, "_blank")} title="View on Wikipedia">
+                    <Button variant="outline" size="sm" onClick={() => window.open(`https://en.wikipedia.org/wiki/${item.article.replace(/ /g, "_")}`, "_blank")} title="View on Wikipedia" className="flex-grow sm:flex-grow-0">
                       <ExternalLink className="h-3.5 w-3.5 mr-1" />Wikipedia
                     </Button>
                     <Button
@@ -204,13 +219,14 @@ export function WikiDashboardPage() {
                         setAiPopupOpen(true);
                       }}
                       title="AI Video Idea"
+                      className="flex-grow sm:flex-grow-0"
                     >
                       <Lightbulb className="h-3.5 w-3.5 mr-1 text-fuchsia-500" />AI Idea
                     </Button>
                   </div>
                 </div>
                 {expanded[item.article] && (
-                  <div className="mt-4 border-t pt-4 grid md:grid-cols-5 gap-4">
+                  <div className="mt-4 border-t pt-4 grid grid-cols-1 md:grid-cols-5 gap-4"> {/* Single column on mobile, 5 on md+ */}
                     <div className="md:col-span-1 flex flex-col items-center">
                       {d.loading ? <Skeleton className="w-24 h-24 rounded-lg" /> : d.imageUrl ? (
                         <Image 
@@ -244,9 +260,9 @@ export function WikiDashboardPage() {
                         <div className="w-full">
                           <span className="font-semibold text-xs">Views (last 7 days):</span>
                           <BarChart2 className="inline-block h-4 w-4 ml-1 text-blue-500" />
-                          <div className="flex gap-1 mt-1">
+                          <div className="flex gap-1 mt-1 justify-center sm:justify-start"> {/* Center chart bars on mobile if they don't fill width */}
                             {d.pageviews?.map((v, i) => (
-                              <div key={i} className="h-8 w-4 bg-blue-200 dark:bg-blue-900 rounded" style={{ height: `${Math.max(8, v / Math.max(...(d.pageviews || [])) * 32)}px` }} title={v.toLocaleString()} />
+                              <div key={i} className="h-8 w-4 bg-blue-200 dark:bg-blue-900 rounded" style={{ height: `${Math.max(8, v / Math.max(...(d.pageviews || [1])) * 32)}px` }} title={`${d.pageviewDates?.[i]?.replace(/(\d{4})(\d{2})(\d{2})/, '$2/$3') || ''}: ${v.toLocaleString()} views`} />
                             ))}
                           </div>
                           <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
@@ -277,6 +293,7 @@ export function WikiDashboardPage() {
   }
   
   const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() -1); // Set max date to yesterday by default for the input
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -312,7 +329,7 @@ export function WikiDashboardPage() {
             id="date-picker"
             value={selectedDate.toISOString().split("T")[0]}
             onChange={handleDateChange}
-            max={maxDate.toISOString().split("T")[0]} // Prevent selecting today or future dates
+            max={maxDate.toISOString().split("T")[0]} // Prevent selecting today or future dates, default to yesterday
             className="block w-full sm:w-auto p-2 border border-input rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm bg-transparent"
           />
            <p className="text-xs text-muted-foreground mt-1">

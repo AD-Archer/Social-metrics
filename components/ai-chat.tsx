@@ -8,6 +8,7 @@
  * Renders AI responses using Markdown.
  * Fetches a custom error message from an external API on failure.
  * The component uses a fixed height and internal scrolling for the chat area.
+ * Includes UI adjustments for better text wrapping in suggestion buttons on mobile.
  */
 import { useState, useRef, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -262,7 +263,7 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
                 key={idea.id}
                 variant="outline"
                 size="sm"
-                className="text-xs px-2 py-1"
+                className="text-xs whitespace-normal text-left h-auto px-2.5 py-1.5"
                 onClick={() => handleIdeaClick(idea.text)}
               >
                 {idea.text}

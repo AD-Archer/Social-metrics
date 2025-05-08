@@ -1,3 +1,10 @@
+/**
+ * Defines the Sheet component and its sub-components for displaying overlay content.
+ * This module provides building blocks for creating side-panel style UI elements,
+ * based on Radix UI's Dialog primitive for accessibility.
+ * Components include Sheet, SheetTrigger, SheetClose, SheetPortal, SheetOverlay,
+ * SheetContent, SheetHeader, SheetFooter, SheetTitle, and SheetDescription.
+ */
 "use client"
 
 import * as React from "react"
@@ -64,6 +71,8 @@ const SheetContent = React.forwardRef<
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
+      {/* Default, visually hidden title for accessibility */}
+      <SheetPrimitive.Title className="sr-only">Sheet Panel</SheetPrimitive.Title>
       {children}
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
         <X className="h-4 w-4" />

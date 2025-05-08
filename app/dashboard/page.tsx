@@ -1,6 +1,7 @@
 /**
  * Dashboard main page displaying YouTube RSS feed and Wikipedia trending articles.
  * Enhanced with modern UI: animated gradient background, glassmorphism cards, improved spacing, and visual accents.
+ * Includes mobile responsiveness enhancements for better display on various screen sizes.
  * Uses existing UI components and Tailwind utilities for a polished, professional look.
  */
 "use client"
@@ -183,8 +184,8 @@ export default function DashboardPage() {
               rel="noopener noreferrer"
               className="hover:underline text-primary flex items-center justify-between group"
             >
-              <span>{item.rank}. {item.article.replace(/_/g, ' ')}</span>
-              <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="truncate">{item.rank}. {item.article.replace(/_/g, ' ')}</span>
+              <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
             </a>
           </li>
         ))}
@@ -194,7 +195,7 @@ export default function DashboardPage() {
 
   // Add gradient background and center content
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center px-2 pb-10 overflow-x-hidden">
+    <div className="relative min-h-screen w-full flex flex-col items-center px-2 sm:px-4 pb-10 overflow-x-hidden">
       {/* Animated gradient background */}
       <div
         aria-hidden
@@ -213,9 +214,11 @@ export default function DashboardPage() {
 
       {/* Notifier for more YouTube stats */}
       <div className="w-full max-w-4xl mx-auto mb-4">
-        <div className="flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 gap-2 text-blue-900 dark:text-blue-200 text-sm font-medium shadow-sm">
-          <Info className="h-4 w-4 text-blue-500 dark:text-blue-300" />
-          For detailed YouTube analytics and trends, visit the <Link href="/dashboard/youtube" className="underline hover:text-blue-700 dark:hover:text-blue-100 transition">YouTube Dashboard</Link>.
+        <div className="flex flex-col sm:flex-row items-center justify-center bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 gap-2 text-blue-900 dark:text-blue-200 text-sm font-medium shadow-sm">
+          <Info className="h-4 w-4 text-blue-500 dark:text-blue-300 flex-shrink-0" />
+          <span className="text-center sm:text-left">
+            For detailed YouTube analytics and trends, visit the <Link href="/dashboard/youtube" className="underline hover:text-blue-700 dark:hover:text-blue-100 transition">YouTube Dashboard</Link>.
+          </span>
         </div>
       </div>
 
@@ -257,7 +260,7 @@ export default function DashboardPage() {
                 )}
               </div>
               <Link href="/dashboard/settings?tab=connections">
-                <Button variant="outline" size="sm" className="gap-2 shadow">
+                <Button variant="outline" size="sm" className="gap-2 shadow w-full sm:w-auto">
                   <Settings className="h-4 w-4" />
                   <span>Configure</span>
                 </Button>

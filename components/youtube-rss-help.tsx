@@ -12,6 +12,7 @@ import {
   Copy,
   ExternalLink,
   Info,
+  ArrowRight,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Sample channel ID for example purposes - Updated to user-provided ID
 const SAMPLE_CHANNEL_ID = "UCq6VFHwMzcMXbuKyG7SQYIg" // User-provided channel ID
@@ -39,12 +41,34 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
     isValid: boolean;
     message: string;
   } | null>(null)
+  const [channelId, setChannelId] = useState("")
+  const [generatedUrl, setGeneratedUrl] = useState("")
+  const [urlCopied, setUrlCopied] = useState(false)
 
   // Copy template URL to clipboard
   const handleCopyTemplate = () => {
     navigator.clipboard.writeText(`https://www.youtube.com/feeds/videos.xml?channel_id=${SAMPLE_CHANNEL_ID}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Generate RSS URL from channel ID
+  const generateRssUrl = () => {
+    if (!channelId.trim()) {
+      return
+    }
+    
+    const trimmedId = channelId.trim()
+    setGeneratedUrl(`https://www.youtube.com/feeds/videos.xml?channel_id=${trimmedId}`)
+  }
+
+  // Copy generated URL
+  const copyGeneratedUrl = () => {
+    if (generatedUrl) {
+      navigator.clipboard.writeText(generatedUrl)
+      setUrlCopied(true)
+      setTimeout(() => setUrlCopied(false), 2000)
+    }
   }
 
   // Validate the input URL format
@@ -110,64 +134,130 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
         </AlertDescription>
       </Alert>
 
-      <div className="space-y-3 rounded-md border p-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="font-medium text-sm">Required Format</h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-              https://www.youtube.com/feeds/videos.xml?channel_id=YOUR_CHANNEL_ID
-            </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyTemplate}
-              className="h-7 gap-1"
-            >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
-            </Button>
-          </div>
-        </div>
+      <Tabs defaultValue="validate" className="w-full">
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="validate">Validate RSS URL</TabsTrigger>
+          <TabsTrigger value="generate">Generate RSS URL</TabsTrigger>
+        </TabsList>
 
-        {currentUrl && currentUrl.includes("@") && (
-          <Alert variant="destructive" className="mt-2">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Invalid URL Format</AlertTitle>
-            <AlertDescription>
-              Your current URL uses a username/handle format (@username). You need to use a channel ID instead.
-            </AlertDescription>
-          </Alert>
-        )}
+        <TabsContent value="validate" className="space-y-3">
+          <div className="space-y-3 rounded-md border p-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="font-medium text-sm">Required Format</h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                  https://www.youtube.com/feeds/videos.xml?channel_id=YOUR_CHANNEL_ID
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyTemplate}
+                  className="h-7 gap-1"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
+                </Button>
+              </div>
+            </div>
 
-        <div className="mt-4 space-y-2">
-          <label htmlFor="test-url" className="text-sm font-medium">
-            Validate Your RSS URL
-          </label>
-          <div className="flex gap-2">
-            <Input
-              id="test-url"
-              value={testUrl}
-              onChange={(e) => setTestUrl(e.target.value)}
-              placeholder="Enter your YouTube RSS URL to validate"
-              className="flex-1"
-            />
-            <Button onClick={validateUrl}>Validate</Button>
-          </div>
-          {validationResult && (
-            <div className={`text-sm ${validationResult.isValid ? "text-green-600" : "text-red-600"}`}>
-              {validationResult.isValid ? (
-                <span className="flex items-center gap-1">
-                  <Check className="h-4 w-4" /> {validationResult.message}
-                </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" /> {validationResult.message}
-                </span>
+            {currentUrl && currentUrl.includes("@") && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Invalid URL Format</AlertTitle>
+                <AlertDescription>
+                  Your current URL uses a username/handle format (@username). You need to use a channel ID instead.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="mt-4 space-y-2">
+              <label htmlFor="test-url" className="text-sm font-medium">
+                Validate Your RSS URL
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="test-url"
+                  value={testUrl}
+                  onChange={(e) => setTestUrl(e.target.value)}
+                  placeholder="Enter your YouTube RSS URL to validate"
+                  className="flex-1"
+                />
+                <Button onClick={validateUrl}>Validate</Button>
+              </div>
+              {validationResult && (
+                <div className={`text-sm ${validationResult.isValid ? "text-green-600" : "text-red-600"}`}>
+                  {validationResult.isValid ? (
+                    <span className="flex items-center gap-1">
+                      <Check className="h-4 w-4" /> {validationResult.message}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" /> {validationResult.message}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="generate" className="space-y-3">
+          <div className="rounded-md border p-4 space-y-4">
+            <div>
+              <h3 className="font-medium text-sm mb-2">Generate RSS URL from Channel ID</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Enter your YouTube channel ID to generate the proper RSS feed URL
+              </p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="channel-id" className="text-sm font-medium">
+                    Channel ID
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="channel-id"
+                      value={channelId}
+                      onChange={(e) => setChannelId(e.target.value)}
+                      placeholder="Enter your Channel ID (e.g., UCq6VFHwMzcMXbuKyG7SQYIg)"
+                      className="flex-1"
+                    />
+                    <Button onClick={generateRssUrl}>
+                      <span>Generate</span>
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {generatedUrl && (
+                  <div className="space-y-2 pt-2">
+                    <label htmlFor="generated-url" className="text-sm font-medium flex items-center gap-2">
+                      <span>Your RSS Feed URL</span>
+                      <Badge variant="outline" className="font-normal">Ready to use</Badge>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="generated-url"
+                        value={generatedUrl}
+                        readOnly
+                        className="flex-1 bg-muted"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={copyGeneratedUrl}
+                        className="gap-1"
+                      >
+                        {urlCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        <span>{urlCopied ? "Copied" : "Copy"}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="find-channel-id">
@@ -179,23 +269,26 @@ export function YouTubeRssHelp({ currentUrl }: YouTubeRssHelpProps) {
               <p>There are several ways to find your YouTube Channel ID:</p>
               
               <div className="space-y-2">
-                <h4 className="font-medium">Method 1: From YouTube Studio</h4>
+                <h4 className="font-medium">Method 1: From channel description (Recommended)</h4>
+                <ol className="list-decimal list-inside space-y-1 pl-2">
+                  <li>Go to any YouTube channel</li>
+                  <li>Click on &quot;More&quot; in the channel description</li>
+                  <li>Click on &quot;Share&quot;</li>
+                  <li>Select &quot;Copy channel ID&quot;</li>
+                </ol>
+                <div className="pl-2 pt-1 text-muted-foreground">
+                  This is the easiest method and works for any channel, not just your own.
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Method 2: From YouTube Studio</h4>
                 <ol className="list-decimal list-inside space-y-1 pl-2">
                   <li>Log in to <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">YouTube Studio</a></li>
                   <li>Click on &quot;Settings&quot; (gear icon) in the bottom-left corner</li>
                   <li>Select &quot;Channel&quot; from the left sidebar</li>
                   <li>Click on &quot;Advanced settings&quot;</li>
                   <li>Your Channel ID appears under &quot;Channel ID&quot;</li>
-                </ol>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium">Method 2: From your channel page source</h4>
-                <ol className="list-decimal list-inside space-y-1 pl-2">
-                  <li>Go to your YouTube channel page</li>
-                  <li>View the page source (right-click → &quot;View Page Source&quot;)</li>
-                  <li>Search for &quot;channelId&quot;</li>
-                  <li>The ID will appear as: <code className="bg-muted px-1">channelId&quot;:&quot;UC...&quot;</code></li>
                 </ol>
               </div>
               
