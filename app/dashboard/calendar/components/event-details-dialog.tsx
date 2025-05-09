@@ -343,20 +343,35 @@ export function EventDetailsDialog({
                 
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                  <div className="mt-2">
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-a:text-primary">
+                  <div className="mt-2 rounded-lg border bg-card p-4 overflow-y-auto max-h-[400px] shadow-inner">
+                    <div className="prose prose-sm dark:prose-invert prose-neutral max-w-none">
                       <ReactMarkdown 
                         remarkPlugins={[remarkGfm]}
                         components={{
-                          // Override components to apply appropriate styles
-                          p: ({node, ...props}) => <p className="my-2" {...props} />,
-                          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2" {...props} />,
-                          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2" {...props} />,
+                          // Strong styling with much better visibility and contrast
+                          strong: ({node, ...props}) => <strong className="font-bold bg-primary/20 px-1.5 py-0.5 rounded text-foreground border-b border-primary/40" {...props} />,
+                          
+                          // Clean list formatting with proper indentation
+                          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-3 space-y-1" {...props} />,
+                          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-3 space-y-1" {...props} />,
                           li: ({node, ...props}) => <li className="my-1" {...props} />,
-                          h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3" {...props} />,
-                          h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
+                          
+                          // Paragraph spacing for readability
+                          p: ({node, ...props}) => <p className="my-2 leading-relaxed" {...props} />,
+                          
+                          // Headers with proper sizing and weight
+                          h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3 pb-1 border-b" {...props} />,
+                          h2: ({node, ...props}) => <h2 className="text-lg font-bold my-3 text-primary" {...props} />,
                           h3: ({node, ...props}) => <h3 className="text-md font-bold my-2" {...props} />,
-                          a: ({node, ...props}) => <a className="text-primary hover:underline" {...props} />
+                          
+                          // Other markdown elements
+                          a: ({node, ...props}) => <a className="text-primary underline hover:text-primary/80 transition-colors" {...props} />,
+                          em: ({node, ...props}) => <em className="italic text-foreground/90" {...props} />,
+                          blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary/30 pl-4 italic my-3 text-foreground/80" {...props} />,
+                          code: ({node, inline, ...props}) => 
+                            inline 
+                              ? <code className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono text-primary" {...props} />
+                              : <pre className="p-3 bg-muted rounded-md overflow-x-auto my-3"><code className="text-sm font-mono" {...props} /></pre>
                         }}
                       >
                         {event.description}
