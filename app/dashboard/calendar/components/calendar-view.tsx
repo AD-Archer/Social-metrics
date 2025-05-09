@@ -136,14 +136,14 @@ export function CalendarView({
                               remarkPlugins={[remarkGfm]}
                               components={{
                                 // Simplified inline components for preview
-                                p: ({node, ...props}) => <span {...props} />,
-                                strong: ({node, ...props}) => <span className="font-medium" {...props} />,
-                                em: ({node, ...props}) => <span className="italic" {...props} />,
-                                h1: ({node, ...props}) => <span className="font-bold" {...props} />,
-                                h2: ({node, ...props}) => <span className="font-bold" {...props} />,
-                                h3: ({node, ...props}) => <span className="font-bold" {...props} />,
-                                ul: ({node, ...props}) => <span {...props} />,
-                                li: ({node, ...props}) => <span {...props} />,
+                                p: ({...props}) => <span {...props} />,
+                                strong: ({...props}) => <span className="font-medium" {...props} />,
+                                em: ({...props}) => <span className="italic" {...props} />,
+                                h1: ({...props}) => <span className="font-bold" {...props} />,
+                                h2: ({...props}) => <span className="font-bold" {...props} />,
+                                h3: ({...props}) => <span className="font-bold" {...props} />,
+                                ul: ({...props}) => <span {...props} />,
+                                li: ({...props}) => <span {...props} />,
                               }}
                             >
                               {event.description}

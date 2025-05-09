@@ -22,7 +22,6 @@ import { Calendar as CalendarIcon, Download, Plus, Calendar as CalendarLucide } 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useCalendarStore, type CalendarEvent } from "@/store/calendar-store";
@@ -144,7 +143,7 @@ export default function CalendarPage() {
                 Calendar AI Assistant
               </CardTitle>
               <CardDescription>
-                Chat with AI to schedule content. Try saying "Schedule a video about summer trends on June 15th"
+                Chat with AI to schedule content. Try saying &ldquo;Schedule a video about summer trends on June 15th&rdquo;
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">

@@ -61,7 +61,7 @@ interface CalendarState {
 const extractDateInfo = (message: string): { date: Date | null, title: string | null } => {
   const titlePattern = /(?:titled|called|named|about|on the topic of|with the title)\s+"([^"]+)"|(?:titled|called|named|about|on the topic of|with the title)\s+([^,.]+)/i;
   const titleMatch = message.match(titlePattern);
-  const title = titleMatch ? titleMatch[1] || titleMatch[2] : null; // Move declaration to the top
+  let title = titleMatch ? titleMatch[1] || titleMatch[2] : null; // Changed const to let
 
   // Various date patterns: "June 12", "June 12th", "12th of June", "12/06", "06-12" etc.
   const datePatterns = [

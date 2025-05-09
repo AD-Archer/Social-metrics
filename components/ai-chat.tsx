@@ -33,8 +33,8 @@ import { useAiIdeasStore, allStaticIdeas } from '@/store/ai-ideas-store';
 import { useCallback, useState as useReactState } from 'react';
 import { useAiChatBridgeStore } from '@/store/ai-chat-bridge-store';
 import { useCalendarStore } from '@/store/calendar-store';
-import { Toast } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/context/auth-context';
 
 interface Message {
   id: string;
@@ -56,6 +56,7 @@ const useTypedYoutubeStore: UseBoundStore<StoreApi<YoutubeState>> = useYoutubeSt
 
 export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) { // Destructure new prop
   const [messages, setMessages] = useState<Message[]>([]);
+  const { user } = useAuth();
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +145,7 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
         }
       ]);
     }
-  }, []);
+  }, [currentDate, messages.length]);
 
   // Prefill input with idea text
   const handleIdeaClick = useCallback((ideaText: string) => {
@@ -227,13 +228,12 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
           title,
           description,
           startDate: date,
-          userId: fullState.user?.uid || 'unknown-user',
+          userId: user?.uid || 'unknown-user',
           source: 'ai',
         });
         toast({
           title: 'Task Added',
           description: `The task "${title}" has been added to your calendar.`,
-          variant: 'success',
         });
       } else {
         console.error("Failed to extract task details from AI response.");

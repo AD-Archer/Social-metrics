@@ -32,13 +32,10 @@ import { db } from '@/lib/firebase';
 import { CalendarEvent } from '@/store/calendar-store';
 import * as ics from 'ics';
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { userId: string } }
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(request: NextRequest, context: any): Promise<NextResponse> {
+  const userId = (context as { params: { userId: string } }).params.userId;
   try {
-    const userId = context.params.userId; // Access params synchronously
-
     if (!userId) {
       console.warn('ICS export: User ID missing in request');
       return new NextResponse('User ID is required', {
@@ -67,6 +64,10 @@ export async function GET(
       // we construct a minimal valid ICS response.
       const icsContent = value || 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialDashboard//EN\nEND:VCALENDAR';
       
+      if (error) {
+        console.error(`ICS export: Error creating empty calendar for user ${userId}:`, error);
+      }
+
       return new NextResponse(icsContent, {
         status: 200,
         headers: {
@@ -89,12 +90,21 @@ export async function GET(
           const now = new Date(); // For fallbacks
 
           // Helper to safely convert various date inputs (Timestamp, string, number) to JS Date
-          const toSafeDate = (dateFieldValue: any, fallbackDate: Date): Date => {
+          const toSafeDate = (dateFieldValue: string | Date | number | { toDate: () => Date } | null | undefined, fallbackDate: Date): Date => {
             if (dateFieldValue == null) return fallbackDate; // Handles undefined or null
 
-            if (typeof dateFieldValue.toDate === 'function') { // Firestore Timestamp object
+            // 1. If it's already a Date object
+            if (dateFieldValue instanceof Date) {
+              return isNaN(dateFieldValue.getTime()) ? fallbackDate : dateFieldValue;
+            }
+
+            // 2. Check for Firestore Timestamp-like object
+            if (typeof dateFieldValue === 'object' && 
+                dateFieldValue !== null && 
+                'toDate' in dateFieldValue && 
+                typeof (dateFieldValue as { toDate: () => Date }).toDate === 'function') {
               try {
-                const d = dateFieldValue.toDate();
+                const d = (dateFieldValue as { toDate: () => Date }).toDate();
                 return isNaN(d.getTime()) ? fallbackDate : d;
               } catch (e) {
                 console.warn(`ICS export: Error converting Firestore Timestamp to Date for event ${event?.id}. Value: ${JSON.stringify(dateFieldValue)}`, e);
@@ -102,20 +112,26 @@ export async function GET(
               }
             }
             
-            // Assuming string, number, or already a JS Date
-            try {
-              const d = new Date(dateFieldValue);
-              return isNaN(d.getTime()) ? fallbackDate : d;
-            } catch (e) {
-              console.warn(`ICS export: Error converting value to Date for event ${event?.id}. Value: ${JSON.stringify(dateFieldValue)}`, e);
-              return fallbackDate;
+            // 3. Handle string or number by trying to parse them
+            if (typeof dateFieldValue === 'string' || typeof dateFieldValue === 'number') {
+              try {
+                const d = new Date(dateFieldValue);
+                return isNaN(d.getTime()) ? fallbackDate : d;
+              } catch (e) {
+                console.warn(`ICS export: Error converting string/number to Date for event ${event?.id}. Value: ${JSON.stringify(dateFieldValue)}`, e);
+                return fallbackDate;
+              }
             }
+
+            // If it's an unknown type, log and return fallback
+            console.warn(`ICS export: Unparseable date format for event ${event?.id}. Value: ${JSON.stringify(dateFieldValue)}`);
+            return fallbackDate;
           };
 
           const title = event.title || 'Untitled Event';
           const description = event.description || '';
           
-          let startDate = toSafeDate(event.startDate, now);
+          const startDate = toSafeDate(event.startDate, now);
           // Log if fallback was used due to invalid original date, and original date was not null/undefined
           if (startDate === now && event.startDate != null) {
              console.warn(`ICS export: Original startDate for event ${event.id} was invalid or unparsable. Using current date as fallback. Original value: ${JSON.stringify(event.startDate)}`);
@@ -141,12 +157,9 @@ export async function GET(
             endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
           }
           
-          let createdDate = toSafeDate(event.createdAt, now);
-          if (createdDate === now && event.createdAt != null) {
-            // Avoid verbose logging if createdAt is simply not set
-          }
+          const createdDate = toSafeDate(event.createdAt, now);
           
-          let updatedDate = toSafeDate(event.updatedAt, createdDate);
+          const updatedDate = toSafeDate(event.updatedAt, createdDate);
           if (updatedDate === createdDate && event.updatedAt != null && event.updatedAt !== event.createdAt) {
              // Avoid verbose logging if updatedAt is simply not set or same as createdDate
           }
@@ -237,7 +250,7 @@ export async function GET(
     // If all events were filtered out due to errors/missing data, return an empty calendar
     if (icsEvents.length === 0) {
       console.log(`ICS export: No valid events to export for user ${userId} after processing. Returning empty calendar.`);
-      const { error, value } = ics.createEvents([]);
+      const { value } = ics.createEvents([]);
       const icsContent = value || 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialDashboard//EN\nEND:VCALENDAR';
       return new NextResponse(icsContent, {
         status: 200,
@@ -278,9 +291,12 @@ export async function GET(
       }
     });
 
-  } catch (error) {
+  } catch (err) {
     // Enhanced error logging for unexpected errors in the overall try-catch
-    console.error(`ICS export: Unhandled exception for user ${context.params.userId || 'unknown'}:`, error);
+    console.error(
+      `ICS export: Unhandled exception for user ${userId}: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      err
+    );
     
     // Return a user-friendly error response, but try to provide a minimal ICS if possible
     const icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialDashboard//EN\nEND:VCALENDAR';
@@ -288,7 +304,7 @@ export async function GET(
       status: 500,
       headers: { 
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': `attachment; filename="error-calendar-${context.params.userId || 'unknown'}.ics"`,
+        'Content-Disposition': `attachment; filename="error-calendar-${userId}.ics"`,
         // No Cache-Control here as it's an error response
        }
     });

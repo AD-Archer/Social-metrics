@@ -31,7 +31,7 @@ export function AiCalendarBridge({ className }: AiCalendarBridgeProps) {
 
   // Get relevant functions from stores
   const { extractEventFromAIChatMessage } = useCalendarStore();
-  const { aiMessages, resetAIMessages } = useAiChatBridgeStore();
+  const { aiMessages } = useAiChatBridgeStore();
 
   // Listen for AI messages with scheduling phrases
   useEffect(() => {
