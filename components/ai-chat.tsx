@@ -9,6 +9,7 @@
  * Fetches a custom error message from an external API on failure.
  * The component uses a fixed height and internal scrolling for the chat area.
  * Includes UI adjustments for better text wrapping in suggestion buttons on mobile.
+ * Tracks AI responses for calendar event detection via the AiChatBridge store.
  */
 import { useState, useRef, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -31,6 +32,9 @@ import {
 import { useAiIdeasStore, allStaticIdeas } from '@/store/ai-ideas-store';
 import { useCallback, useState as useReactState } from 'react';
 import { useAiChatBridgeStore } from '@/store/ai-chat-bridge-store';
+import { useCalendarStore } from '@/store/calendar-store';
+import { Toast } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Message {
   id: string;
@@ -128,6 +132,20 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWikipediaTopics]);
 
+  const currentDate = new Date().toLocaleDateString(); // Get the current date
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([
+        {
+          id: Date.now().toString() + '-system-info',
+          role: 'assistant',
+          content: `Hello! Today is ${currentDate}. I can help you brainstorm video ideas, analyze your YouTube performance, and even add tasks to your content calendar. Just let me know what you need!`
+        }
+      ]);
+    }
+  }, []);
+
   // Prefill input with idea text
   const handleIdeaClick = useCallback((ideaText: string) => {
     setInput(ideaText);
@@ -136,6 +154,9 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInput(event.target.value);
   };
+
+  const aiChatBridge = useAiChatBridgeStore();
+  const { toast } = useToast(); // Ensure toast is imported and used correctly
 
   const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -156,12 +177,7 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
     setError(null);
 
     // Prepare context for the AI
-    const contextForAI = analyticsSummary; // Already includes Wikipedia topics if present
-    
-    // If this is the first user message AND wikipedia topics were provided,
-    // we can make the user's first message more explicit about those topics.
-    // However, the analyticsSummary already includes this.
-    // The initial message added via useEffect serves as a good prompt.
+    const contextForAI = analyticsSummary;
 
     try {
       const response = await fetch('/api/youtube/ai/chat', {
@@ -172,14 +188,13 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
         body: JSON.stringify({ 
           message: userMessage.content,
           history: currentHistory,
-          analyticsContext: contextForAI // Send the potentially augmented context
+          analyticsContext: contextForAI
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Throw the error message from the API response if available
         throw new Error(data.error || `API Error: ${response.status}`);
       }
 
@@ -190,29 +205,47 @@ export function YoutubeAIChat({ selectedWikipediaTopics }: YoutubeAIChatProps) {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
+      // Track AI response in the bridge store for calendar event detection
+      aiChatBridge.addAIMessage(data.response);
+
+      // Improved task extraction logic
+      console.log("AI Response for Task:", data.response);
+      const taskMatch = data.response.match(/(?:Task:|Video Topic:)\s*(.*?)(?:\n|$)/i);
+      const descriptionMatch = data.response.match(/(?:Description:|Video Outline:)\s*(.*?)(?:\n|$)/i);
+      const dateMatch = data.response.match(/\b(?:\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{1,2})\b/);
+
+      if (taskMatch || descriptionMatch || dateMatch) {
+        const title = taskMatch ? taskMatch[1].trim() : "Untitled Task";
+        const description = descriptionMatch ? descriptionMatch[1].trim() : "No description provided.";
+        const date = dateMatch ? new Date(dateMatch[0]).toISOString() : new Date().toISOString();
+
+        console.log("Extracted Task Details:", { title, description, date });
+
+        // Add task to calendar store
+        const calendarStore = useCalendarStore.getState();
+        calendarStore.createEvent({
+          title,
+          description,
+          startDate: date,
+          userId: fullState.user?.uid || 'unknown-user',
+          source: 'ai',
+        });
+        toast({
+          title: 'Task Added',
+          description: `The task "${title}" has been added to your calendar.`,
+          variant: 'success',
+        });
+      } else {
+        console.error("Failed to extract task details from AI response.");
+      }
+
     } catch (err) {
       console.error("Chat API error:", err);
-      // Attempt to fetch the custom error message
-      try {
-        const errorResponse = await fetch('https://naas.isalman.dev/no');
-          if (errorResponse.ok) {
-            const errorData = await errorResponse.json();
-            setError(errorData.reason || "An unexpected error occurred.");
-          } else {
-            // Fallback if the custom error API fails
-            setError("Failed to get response from AI, and couldn&apos;t fetch a witty error message either.");
-          }
-      } catch (fetchError) {
-        console.error("Failed to fetch custom error message:", fetchError);
-        // Fallback if the fetch itself fails
-        setError("Failed to get response from AI. Please try again later.");
-      }
+      setError("Failed to get response from AI. Please try again later.");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const aiChatBridge = useAiChatBridgeStore();
 
   // Listen for external AI message requests
   useEffect(() => {

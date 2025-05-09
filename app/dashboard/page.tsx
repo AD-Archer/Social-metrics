@@ -3,12 +3,13 @@
  * Enhanced with modern UI: animated gradient background, glassmorphism cards, improved spacing, and visual accents.
  * Includes mobile responsiveness enhancements for better display on various screen sizes.
  * Uses existing UI components and Tailwind utilities for a polished, professional look.
+ * Integrates with AI calendar bridge to detect scheduling events in AI chat conversations.
  */
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Youtube, ExternalLink, Settings, AlertCircle, BookOpen, Info } from "lucide-react"
+import { Youtube, ExternalLink, Settings, AlertCircle, BookOpen, Info, Calendar } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -19,6 +20,7 @@ import { doc, getDoc } from "firebase/firestore"
 import { useAccounts } from "@/context/account-context"
 import { useToast } from "@/components/ui/use-toast"
 import { YoutubeAIChat } from "@/components/ai-chat"
+import { AiCalendarBridge } from "@/components/ai-calendar-bridge" 
 
 // Define the structure for a Wikipedia trending article
 interface WikipediaTrendingItem {
@@ -212,6 +214,41 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Feature Cards */}
+      <div className="w-full max-w-4xl mx-auto mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* YouTube Stats Card */}
+          <Link href="/dashboard/youtube" className="group">
+            <Card className="h-full hover:shadow-md transition-all hover:-translate-y-1 hover:bg-accent/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Youtube className="h-5 w-5 text-red-600" />
+                  YouTube Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Detailed metrics and performance analysis for your YouTube content.</p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          {/* Content Calendar Card */}
+          <Link href="/dashboard/calendar" className="group">
+            <Card className="h-full hover:shadow-md transition-all hover:-translate-y-1 hover:bg-accent/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  Content Calendar
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Plan and schedule your content with AI-assisted calendar management.</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </div>
+
       {/* Notifier for more YouTube stats */}
       <div className="w-full max-w-4xl mx-auto mb-4">
         <div className="flex flex-col sm:flex-row items-center justify-center bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 gap-2 text-blue-900 dark:text-blue-200 text-sm font-medium shadow-sm">
@@ -269,6 +306,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Calendar Bridge - Monitors AI messages for scheduling triggers */}
+      <AiCalendarBridge className="w-full max-w-4xl mb-4" />
 
       {/* YouTube AI Chat Component */}
       {youtubeAccount && rssConfigured && (
