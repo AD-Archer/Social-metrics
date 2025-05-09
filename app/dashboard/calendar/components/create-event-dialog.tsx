@@ -186,7 +186,7 @@ export function CreateEventDialog({
                   <FormControl>
                     <Textarea 
                       placeholder="Brief description of the content" 
-                      className="resize-none" 
+                      className="resize-y min-h-[100px]" 
                       {...field} 
                     />
                   </FormControl>

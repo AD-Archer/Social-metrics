@@ -1,6 +1,7 @@
 /**
  * Calendar View component for displaying events in a monthly calendar.
- * Supports date selection, event highlighting, and event click actions.
+ * Supports date selection, event highlighting, event click actions, and markdown rendering.
+ * Provides a clean, accessible interface for viewing calendar events with rich text support.
  */
 "use client"
 
@@ -12,6 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { CalendarEvent } from "@/store/calendar-store"
 import { DayContent, DayContentProps } from "react-day-picker"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface CalendarViewProps {
   events: CalendarEvent[]
@@ -124,15 +127,36 @@ export function CalendarView({
                   onClick={() => onEventSelect(event)}
                 >
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1 mr-2">
                       <h4 className="font-medium">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {event.description}
-                      </p>
+                      <div className="text-sm text-muted-foreground max-h-10 overflow-hidden prose-sm dark:prose-invert">
+                        {event.source === 'ai' ? (
+                          <div className="line-clamp-2">
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                // Simplified inline components for preview
+                                p: ({node, ...props}) => <span {...props} />,
+                                strong: ({node, ...props}) => <span className="font-medium" {...props} />,
+                                em: ({node, ...props}) => <span className="italic" {...props} />,
+                                h1: ({node, ...props}) => <span className="font-bold" {...props} />,
+                                h2: ({node, ...props}) => <span className="font-bold" {...props} />,
+                                h3: ({node, ...props}) => <span className="font-bold" {...props} />,
+                                ul: ({node, ...props}) => <span {...props} />,
+                                li: ({node, ...props}) => <span {...props} />,
+                              }}
+                            >
+                              {event.description}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="line-clamp-2">{event.description}</p>
+                        )}
+                      </div>
                     </div>
                     <Badge 
                       variant={event.source === 'ai' ? 'secondary' : 'default'}
-                      className="ml-2 capitalize"
+                      className="ml-2 capitalize flex-shrink-0"
                     >
                       {event.source}
                     </Badge>
