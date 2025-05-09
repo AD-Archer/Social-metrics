@@ -45,38 +45,11 @@ service cloud.firestore {
         allow read: if true; // Public read access to RSS feeds
         allow write: if request.auth != null && request.auth.uid == userId;
       }
-    }
-    
-    // Calendar events collection - users can only access their own events
-    match /calendar-events/{eventId} {
-      // Allow users to read their own calendar events
-      allow read: if request.auth != null && 
-                   resource.data.userId == request.auth.uid;
-      
-      // Temporarily allow all authenticated users to create events for debugging
-      allow create: if request.auth != null;
-      
-      // Allow users to create events with proper validation
-      allow create: if request.auth != null && 
-                     request.resource.data.userId == request.auth.uid &&
-                     request.resource.data.title is string &&
-                     request.resource.data.description is string &&
-                     request.resource.data.startDate is string &&
-                     (request.resource.data.source == 'manual' || 
-                      request.resource.data.source == 'ai');
-      
-      // Allow users to update their own events
-      allow update: if request.auth != null && 
-                     resource.data.userId == request.auth.uid &&
-                     request.resource.data.userId == resource.data.userId;
-      
-      // Allow users to delete their own events                
-      allow delete: if request.auth != null && 
-                     resource.data.userId == request.auth.uid;
-      
-      // Allow admin users to read all events
-      allow read: if request.auth != null &&
-                   request.auth.token.admin == true;
+
+      // Calendar events subcollection - allow users to access their own events
+      match /calendar-events/{eventId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
     
     // YouTube analytics collection

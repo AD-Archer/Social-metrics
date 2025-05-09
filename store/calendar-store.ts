@@ -82,6 +82,37 @@ const extractDateInfo = (message: string): { date: Date | null, title: string | 
     /\b(next\s+week)\b/i
   ];
 
+  // Add a new pattern to extract dates from structured AI responses
+  // This will match formats like "**Date:** June 15" or "Date: July 10th"
+  const structuredDatePattern = /(?:\*\*Date:\*\*|\bDate:)\s+([a-zA-Z]+)\s+(\d+)(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?/i;
+  const structuredMatch = message.match(structuredDatePattern);
+  
+  if (structuredMatch) {
+    try {
+      const month = structuredMatch[1];
+      const day = parseInt(structuredMatch[2]);
+      const year = structuredMatch[3] ? parseInt(structuredMatch[3]) : new Date().getFullYear();
+      const monthIndex = new Date(`${month} 1, 2000`).getMonth();
+      if (!isNaN(monthIndex) && !isNaN(day)) {
+        return { 
+          date: new Date(year, monthIndex, day),
+          title
+        };
+      }
+    } catch (e) {
+      console.error("Structured date parsing error:", e);
+    }
+  }
+
+  // Extract potential event name from structured format
+  if (!title) {
+    const eventNamePattern = /\*\*Event Name:\*\*\s+([^\n]+)/i;
+    const eventNameMatch = message.match(eventNamePattern);
+    if (eventNameMatch && eventNameMatch[1]) {
+      title = eventNameMatch[1].trim();
+    }
+  }
+
   for (const pattern of relativeDatePatterns) {
     const match = message.match(pattern);
     if (match) {
@@ -173,15 +204,15 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   fetchEvents: async (userId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const eventsCollection = collection(db, 'calendar-events');
-      const eventsQuery = query(eventsCollection, where('userId', '==', userId));
+      const eventsCollection = collection(db, `users/${userId}/calendar-events`); // Ensure events are fetched from the user's subcollection
+      const eventsQuery = query(eventsCollection);
       const querySnapshot = await getDocs(eventsQuery);
-      
+
       const events: CalendarEvent[] = [];
       querySnapshot.forEach((doc) => {
         events.push({ id: doc.id, ...doc.data() } as CalendarEvent);
       });
-      
+
       set({ events, isLoading: false });
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -204,7 +235,8 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
       
       console.log("Creating event with userId:", eventData.userId);
       console.log("Creating event with data:", newEvent);
-      const docRef = await addDoc(collection(db, 'calendar-events'), newEvent);
+      const eventsCollection = collection(db, `users/${eventData.userId}/calendar-events`); // Ensure events are stored in the user's subcollection
+      const docRef = await addDoc(eventsCollection, newEvent);
       console.log("Event created with ID:", docRef.id);
       
       // Update local state
@@ -229,7 +261,14 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   updateEvent: async (eventId, eventData) => {
     set({ isLoading: true, error: null });
     try {
-      const eventRef = doc(db, 'calendar-events', eventId);
+      // Find the event in the current state to get its userId
+      const event = get().events.find(e => e.id === eventId);
+      if (!event) {
+        throw new Error("Event not found");
+      }
+      
+      // Use the correct path format that includes userId
+      const eventRef = doc(db, `users/${event.userId}/calendar-events`, eventId);
       
       // Add updated timestamp
       const updateData = {
@@ -258,7 +297,14 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   deleteEvent: async (eventId) => {
     set({ isLoading: true, error: null });
     try {
-      const eventRef = doc(db, 'calendar-events', eventId);
+      // Find the event in the current state to get its userId
+      const event = get().events.find(e => e.id === eventId);
+      if (!event) {
+        throw new Error("Event not found");
+      }
+      
+      // Use the correct path format that includes userId
+      const eventRef = doc(db, `users/${event.userId}/calendar-events`, eventId);
       await deleteDoc(eventRef);
       
       // Update local state
@@ -354,34 +400,110 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
       // Extract date and potential title from the message
       const { date, title } = extractDateInfo(message);
       
-      if (!date || isNaN(date.getTime())) { // Validate the date
+      if (!date || isNaN(date.getTime())) {
         console.error("Invalid date extracted from AI message:", message);
-        return null; // Return null if the date is invalid
+        return null;
       }
 
-      // Extract a description from the message by taking relevant context
-      const descriptionPattern = /(?:about|create a video about|make a video about|on the topic of)\s+([^,.?!]+)/i;
-      const descriptionMatch = message.match(descriptionPattern);
-      const description = descriptionMatch 
-        ? descriptionMatch[1] 
-        : message.substring(0, 100) + (message.length > 100 ? '...' : '');
+      // Enhanced title extraction strategies
+      let extractedTitle = "";
+      
+      // First check for explicit title formats
+      const titlePatterns = [
+        /\*\*Event Name:\*\*\s+([^\n]+)/i,
+        /\*\*Title:\*\*\s+([^\n]+)/i,
+        /\*\*Video Title:\*\*\s+([^\n]+)/i,
+        /\*\*Content Title:\*\*\s+([^\n]+)/i,
+        /Title Suggestions:[\s\n]*[-•]?\s*"([^"]+)"/i,
+        /Title Suggestions:[\s\n]*[-•]?\s*([^\n"]+)/i,
+        /titled\s+[""]([^""]+)[""]/i,
+        /titled\s+([^,.!?]+)/i,
+        /about\s+[""]([^""]+)[""]/i
+      ];
+      
+      for (const pattern of titlePatterns) {
+        const match = message.match(pattern);
+        if (match && match[1]) {
+          extractedTitle = match[1].trim();
+          break;
+        }
+      }
+      
+      // If no title found, use topic-based extraction
+      if (!extractedTitle && title) {
+        extractedTitle = title;
+      }
+      
+      // If still no title, extract the main topic from the message
+      if (!extractedTitle) {
+        const topicMatch = message.match(/(?:video|content) (?:about|on|for) ([^,.!?]+)/i);
+        if (topicMatch && topicMatch[1]) {
+          extractedTitle = `${topicMatch[1].trim()} - ${date.toLocaleDateString()}`;
+        }
+      }
+      
+      // Last resort - check first paragraph for any content that might be a title
+      if (!extractedTitle) {
+        const firstParagraph = message.split('\n')[0];
+        if (firstParagraph && firstParagraph.length < 80) {
+          extractedTitle = firstParagraph.replace(/^I've added |^Here's |^Created /i, '').trim();
+        }
+      }
+      
+      // Final fallback
+      const finalTitle = extractedTitle || `Content for ${date.toLocaleDateString()}`;
+      
+      // Enhanced description extraction - preserve formatting where possible
+      let extractedDescription = "";
+      
+      // Look for structured descriptions
+      const descPatterns = [
+        /\*\*Description:\*\*\s+([\s\S]+?)(?=\n\n\*\*|\n\n#|\n\n-|\n\n\d\.|\n\n\w+:|\n\n$|$)/i,
+        /\*\*Content:\*\*\s+([\s\S]+?)(?=\n\n\*\*|\n\n#|\n\n-|\n\n\d\.|\n\n\w+:|\n\n$|$)/i,
+        /\*\*Video Outline:\*\*\s+([\s\S]+?)(?=\n\n\*\*|\n\n#|\n\n-|\n\n\d\.|\n\n\w+:|\n\n$|$)/i
+      ];
+      
+      for (const pattern of descPatterns) {
+        const match = message.match(pattern);
+        if (match && match[1]) {
+          extractedDescription = match[1].trim();
+          break;
+        }
+      }
+      
+      // If no structured description, try to extract the whole section after the title
+      if (!extractedDescription) {
+        const contentSections = message.split('\n\n');
+        if (contentSections.length > 1) {
+          // Skip the first section if it contains the title, and compile a proper description
+          const startIdx = contentSections[0].includes(finalTitle) ? 1 : 0;
+          extractedDescription = contentSections.slice(startIdx, Math.min(startIdx + 3, contentSections.length)).join('\n\n');
+        }
+      }
+      
+      // Fallback if all else fails
+      if (!extractedDescription) {
+        extractedDescription = message.substring(0, Math.min(300, message.length));
+      }
+      
+      // Create and save the event with improved error handling
+      try {
+        const eventData = {
+          userId,
+          title: finalTitle,
+          description: extractedDescription,
+          startDate: date.toISOString(),
+          allDay: true,
+          source: 'ai' as const,
+        };
 
-      // Request AI to generate a title and description if not provided
-      const aiGeneratedTitle = title || `AI-Generated Title for ${date.toLocaleDateString()}`;
-      const aiGeneratedDescription = description || `AI-Generated Description for an event on ${date.toLocaleDateString()}.`;
-
-      // Create the event
-      const eventData = {
-        userId,
-        title: aiGeneratedTitle,
-        description: aiGeneratedDescription,
-        startDate: date.toISOString(),
-        allDay: true,
-        source: 'ai' as const,
-      };
-
-      const eventId = await get().createEvent(eventData);
-      return eventId || null;
+        const eventId = await get().createEvent(eventData);
+        return eventId || null;
+      } catch (firestoreError) {
+        console.error("Firebase error creating calendar event:", firestoreError);
+        // Silent recovery - the user already sees a success message, but we log the error
+        return null;
+      }
     } catch (error) {
       console.error("Error extracting event from AI message:", error);
       set({ error: error instanceof Error ? error.message : "Failed to process AI message" });

@@ -57,6 +57,8 @@ import { useForm } from "react-hook-form"
 import { cn } from "@/lib/utils"
 import * as z from "zod"
 import { Badge } from "@/components/ui/badge"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface EventDetailsDialogProps {
   open: boolean
@@ -341,7 +343,26 @@ export function EventDetailsDialog({
                 
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                  <p className="mt-1">{event.description}</p>
+                  <div className="mt-2">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-a:text-primary">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // Override components to apply appropriate styles
+                          p: ({node, ...props}) => <p className="my-2" {...props} />,
+                          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2" {...props} />,
+                          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2" {...props} />,
+                          li: ({node, ...props}) => <li className="my-1" {...props} />,
+                          h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3" {...props} />,
+                          h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
+                          h3: ({node, ...props}) => <h3 className="text-md font-bold my-2" {...props} />,
+                          a: ({node, ...props}) => <a className="text-primary hover:underline" {...props} />
+                        }}
+                      >
+                        {event.description}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
